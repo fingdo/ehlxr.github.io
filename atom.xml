@@ -1,0 +1,982 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Ehlxr&#39;s Blog</title>
+  <subtitle>世界那么大，在此安个家...</subtitle>
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="http://ehlxr.me/"/>
+  <updated>2017-01-10T03:26:27.316Z</updated>
+  <id>http://ehlxr.me/</id>
+  
+  <author>
+    <name>小桥流水人家</name>
+    
+  </author>
+  
+  <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>[转]CentOS 升级 kernel</title>
+    <link href="http://ehlxr.me/2017/01/10/%E8%BD%AC-CentOS-%E5%8D%87%E7%BA%A7-kernel/"/>
+    <id>http://ehlxr.me/2017/01/10/转-CentOS-升级-kernel/</id>
+    <published>2017-01-10T11:01:09.000Z</published>
+    <updated>2017-01-10T03:26:27.316Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="一、手动档"><a href="#一、手动档" class="headerlink" title="一、手动档"></a>一、手动档</h1><p>手动档就是从源码开始编译内核安装，好处是可以自己选择任意版本的内核，缺点就是耗时长，编译安装消耗系统资源</p>
+<h2 id="1-1、获取-kernel-源码"><a href="#1-1、获取-kernel-源码" class="headerlink" title="1.1、获取 kernel 源码"></a>1.1、获取 kernel 源码</h2><p>这世界上最伟大的 Linux 内核源码下载地址是 <a href="https://kernel.org/" target="_blank" rel="external">kernel</a> 官网，选择一个稳定版本下载即可</p>
+<h2 id="1-2、解压并清理"><a href="#1-2、解压并清理" class="headerlink" title="1.2、解压并清理"></a>1.2、解压并清理</h2><p>官方要求将其解压到 <code>/usr/src</code> 目录，其实在哪都可以，为了规范一点索性也解压到此位置，然后为了防止编译残留先做一次清理动作</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># 下载内核源码</span></div><div class="line">$ wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.8.6.tar.xz</div><div class="line"></div><div class="line"><span class="comment"># 解压并移动到 /usr/src</span></div><div class="line">$ tar -Jxvf linux-4.8.6.tar.xz</div><div class="line">$ mv linux-4.8.6 /usr/src/kernels</div><div class="line"></div><div class="line"><span class="comment"># 执行清理（没 gcc 的要装一下）</span></div><div class="line">$ <span class="built_in">cd</span> /usr/src/kernels/linux-4.8.6</div><div class="line">$ make mrproper &amp;&amp; make clean</div></pre></td></tr></table></figure>
+<a id="more"></a>
+<h2 id="1-3、生成编译配置表"><a href="#1-3、生成编译配置表" class="headerlink" title="1.3、生成编译配置表"></a>1.3、生成编译配置表</h2><p>kernel 在编译时需要一个配置文件（<code>.config</code>），用于描述开启哪些特性等，该文件一般可通过一下四种途径获得:</p>
+<ul>
+<li>复制当前系统编译配置表，即 <code>cp /boot/config-xxx .config</code>；如果系统有多个内核，那么根据版本号选择最新的即可</li>
+<li>使用 <code>make defconfig</code> 命令获取当前系统编译配置表，该命令会自动写入到 <code>.config</code> 中</li>
+<li>使用 <code>make localmodconfig</code> 命令开启交互模式，然后根据提示生成编译配置表</li>
+<li>使用 <code>make oldconfig</code> 命令根据旧的编译配置表生成新的编译配置表，<strong>刚方式会直接读取旧的便已配置表，并在以前没有设定过的配置时会自动开启交互模式</strong></li>
+</ul>
+<p>这里采用最后一种方式生成</p>
+<h2 id="1-4、编译并安装"><a href="#1-4、编译并安装" class="headerlink" title="1.4、编译并安装"></a>1.4、编译并安装</h2><p>内核配置表生成完成后便可进行编译和安装（需要安装 <code>bc、openssl-devel</code> 等）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ make</div><div class="line">$ make modules</div><div class="line">$ make modules_install</div><div class="line">$ make install</div></pre></td></tr></table></figure>
+<p>最后执行重启验证即可，验证成功后可删除旧的内核</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># 检索已安装的内核</span></div><div class="line">$ sudo rpm -qa | grep kernel</div><div class="line"></div><div class="line"><span class="comment"># 删除指定的内核</span></div><div class="line">$ sudo rpm <span class="_">-e</span> kernel-3.10.0-327.el7.x86_64</div></pre></td></tr></table></figure>
+<h1 id="二、自动档"><a href="#二、自动档" class="headerlink" title="二、自动档"></a>二、自动档</h1><p>相对于手动档编译安装，CentOS 还可以通过使用 <a href="http://elrepo.org/tiki/tiki-index.php" target="_blank" rel="external">elrepo</a> 源的方式直接安装最新稳定版 kernel，脚本如下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># import key</span></div><div class="line">$ sudo rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org</div><div class="line"></div><div class="line"><span class="comment"># install elrepo repo</span></div><div class="line">$ sudo rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm</div><div class="line"></div><div class="line"><span class="comment"># install kernel</span></div><div class="line">$ sudo yum --enablerepo=elrepo-kernel install  kernel-ml-devel kernel-ml -y</div><div class="line"></div><div class="line"><span class="comment"># modify grub</span></div><div class="line">$ sudo grub2-set-default 0</div><div class="line"></div><div class="line"><span class="comment"># reboot system</span></div><div class="line">$ sudo reboot</div></pre></td></tr></table></figure>
+<p><a href="https://mritd.me/2016/11/08/update-centos-kernel/" target="_blank" rel="external">原文地址</a></p>
+<hr>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;一、手动档&quot;&gt;&lt;a href=&quot;#一、手动档&quot; class=&quot;headerlink&quot; title=&quot;一、手动档&quot;&gt;&lt;/a&gt;一、手动档&lt;/h1&gt;&lt;p&gt;手动档就是从源码开始编译内核安装，好处是可以自己选择任意版本的内核，缺点就是耗时长，编译安装消耗系统资源&lt;/p&gt;
+&lt;h2 id=&quot;1-1、获取-kernel-源码&quot;&gt;&lt;a href=&quot;#1-1、获取-kernel-源码&quot; class=&quot;headerlink&quot; title=&quot;1.1、获取 kernel 源码&quot;&gt;&lt;/a&gt;1.1、获取 kernel 源码&lt;/h2&gt;&lt;p&gt;这世界上最伟大的 Linux 内核源码下载地址是 &lt;a href=&quot;https://kernel.org/&quot;&gt;kernel&lt;/a&gt; 官网，选择一个稳定版本下载即可&lt;/p&gt;
+&lt;h2 id=&quot;1-2、解压并清理&quot;&gt;&lt;a href=&quot;#1-2、解压并清理&quot; class=&quot;headerlink&quot; title=&quot;1.2、解压并清理&quot;&gt;&lt;/a&gt;1.2、解压并清理&lt;/h2&gt;&lt;p&gt;官方要求将其解压到 &lt;code&gt;/usr/src&lt;/code&gt; 目录，其实在哪都可以，为了规范一点索性也解压到此位置，然后为了防止编译残留先做一次清理动作&lt;/p&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;4&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;5&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;6&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;7&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;8&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;9&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;10&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# 下载内核源码&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;$ wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.8.6.tar.xz&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# 解压并移动到 /usr/src&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;$ tar -Jxvf linux-4.8.6.tar.xz&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;$ mv linux-4.8.6 /usr/src/kernels&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# 执行清理（没 gcc 的要装一下）&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;$ &lt;span class=&quot;built_in&quot;&gt;cd&lt;/span&gt; /usr/src/kernels/linux-4.8.6&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;$ make mrproper &amp;amp;&amp;amp; make clean&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+    
+    </summary>
+    
+      <category term="Linux" scheme="http://ehlxr.me/categories/Linux/"/>
+    
+    
+      <category term="Linux" scheme="http://ehlxr.me/tags/Linux/"/>
+    
+      <category term="CentOS" scheme="http://ehlxr.me/tags/CentOS/"/>
+    
+      <category term="kernel" scheme="http://ehlxr.me/tags/kernel/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Docker 利用数据卷容器来备份、恢复、迁移数据</title>
+    <link href="http://ehlxr.me/2017/01/09/Docker-%E5%88%A9%E7%94%A8%E6%95%B0%E6%8D%AE%E5%8D%B7%E5%AE%B9%E5%99%A8%E6%9D%A5%E5%A4%87%E4%BB%BD%E3%80%81%E6%81%A2%E5%A4%8D%E3%80%81%E8%BF%81%E7%A7%BB%E6%95%B0%E6%8D%AE/"/>
+    <id>http://ehlxr.me/2017/01/09/Docker-利用数据卷容器来备份、恢复、迁移数据/</id>
+    <published>2017-01-09T16:54:24.000Z</published>
+    <updated>2017-01-10T03:26:27.318Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>在 Docker 容器之间如果需要共享数据，可以创建一个数据卷容器来实现，并且可以方便的通过数据卷容器来备份、恢复、迁移数据。</p>
+</blockquote>
+<h1 id="创建数据卷容器"><a href="#创建数据卷容器" class="headerlink" title="创建数据卷容器"></a>创建数据卷容器</h1><p>创建一个名为：dbdata 的数据卷容器；设置挂载点为 <code>/vdata</code>。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo docker run <span class="_">-d</span> -v /vdata --name dbdata alpine sh</div></pre></td></tr></table></figure>
+<p>数据卷容器是一个普通的 Docker 容器，可以不需要启动。<br><a id="more"></a></p>
+<h1 id="使用数据卷容器"><a href="#使用数据卷容器" class="headerlink" title="使用数据卷容器"></a>使用数据卷容器</h1><p>使用命令 <code>--volumes-from</code> 创建挂载数据卷容器 dbdata 的容器：db1、db2。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ sudo docker run -it --volumes-from dbdata --name db1 alpine sh</div><div class="line"></div><div class="line">$ sudo docker run -it --volumes-from dbdata --name db1 alpine sh</div></pre></td></tr></table></figure>
+<p>在容器 db1 的挂载目录 <code>/vdata</code> 目录下，创建文件 1.txt 等测试数据，查看容器 db2 的挂载目录 <code>/vdata</code> 目录，就可以看到创建的文件数据了。</p>
+<h1 id="备份数据卷数据"><a href="#备份数据卷数据" class="headerlink" title="备份数据卷数据"></a>备份数据卷数据</h1><p>使用一个临时容器，完成备份数据容器操作。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo docker run --rm --volumes-from dbdata -v $(<span class="built_in">pwd</span>):/backup alpine tar cvf /backup/vdata-bak.tar /vdata</div></pre></td></tr></table></figure>
+<p>使用 <code>tar cvf</code> 命令，备份数据卷容器 dbdata 中的目录 <code>/vdata</code> 为 <code>vdata-bak.tar</code>，并挂载到宿主机的当前目录下。</p>
+<h1 id="恢复数据卷数据"><a href="#恢复数据卷数据" class="headerlink" title="恢复数据卷数据"></a>恢复数据卷数据</h1><p>创建数据卷容器：dbdata2</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo docker run <span class="_">-d</span> -v /vdata --name dbdata2 alpine sh</div></pre></td></tr></table></figure>
+<p>使用一个临时容器，恢复备份数据 <code>vdata-bak.tar</code> 到 dbdata2</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo docker run --rm --volumes-from dbdata2 -v $(<span class="built_in">pwd</span>):/backup alpine tar xvf /backup/vdata-bak.tar</div></pre></td></tr></table></figure>
+<p>使用一个临时容器，查看 dbdata2 恢复的数据：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo docker run --rm --volumes-from dbdata2 alpine /bin/ls /vdata</div></pre></td></tr></table></figure>]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;在 Docker 容器之间如果需要共享数据，可以创建一个数据卷容器来实现，并且可以方便的通过数据卷容器来备份、恢复、迁移数据。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h1 id=&quot;创建数据卷容器&quot;&gt;&lt;a href=&quot;#创建数据卷容器&quot; class=&quot;headerlink&quot; title=&quot;创建数据卷容器&quot;&gt;&lt;/a&gt;创建数据卷容器&lt;/h1&gt;&lt;p&gt;创建一个名为：dbdata 的数据卷容器；设置挂载点为 &lt;code&gt;/vdata&lt;/code&gt;。&lt;/p&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;$ sudo docker run &lt;span class=&quot;_&quot;&gt;-d&lt;/span&gt; -v /vdata --name dbdata alpine sh&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;数据卷容器是一个普通的 Docker 容器，可以不需要启动。&lt;br&gt;
+    
+    </summary>
+    
+      <category term="Docker" scheme="http://ehlxr.me/categories/Docker/"/>
+    
+    
+      <category term="Docker" scheme="http://ehlxr.me/tags/Docker/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>CentOS 7 安装Python3、pip3</title>
+    <link href="http://ehlxr.me/2017/01/07/CentOS-7-%E5%AE%89%E8%A3%85-Python3%E3%80%81pip3/"/>
+    <id>http://ehlxr.me/2017/01/07/CentOS-7-安装-Python3、pip3/</id>
+    <published>2017-01-07T19:23:22.000Z</published>
+    <updated>2017-01-10T03:26:27.316Z</updated>
+    
+    <content type="html"><![CDATA[<p>CentOS 7 默认安装了 Python 2，当需要使用 Python 3 的时候，可以手动下载 Python 源码后编译安装。</p>
+<h1 id="一、安装-Python-3"><a href="#一、安装-Python-3" class="headerlink" title="一、安装 Python 3"></a>一、安装 Python 3</h1><h2 id="1-1-安装准备"><a href="#1-1-安装准备" class="headerlink" title="1.1 安装准备"></a>1.1 安装准备</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">$ sudo mkdir /usr/<span class="built_in">local</span>/python3 <span class="comment"># 创建安装目录</span></div><div class="line"></div><div class="line"><span class="comment"># 下载 Python 源文件</span></div><div class="line">$ wget --no-check-certificate https://www.python.org/ftp/python/3.6.0/Python-3.6.0.tgz</div><div class="line"><span class="comment"># 注意：wget获取https的时候要加上：--no-check-certificate</span></div><div class="line"></div><div class="line">$ tar -xzvf Python-3.6.0.tgz <span class="comment"># 解压缩包</span></div><div class="line"></div><div class="line">$ <span class="built_in">cd</span> Python-3.6.0 <span class="comment"># 进入解压目录</span></div></pre></td></tr></table></figure>
+<a id="more"></a>
+<h2 id="1-2-编译安装"><a href="#1-2-编译安装" class="headerlink" title="1.2 编译安装"></a>1.2 编译安装</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ sudo ./configure --prefix=/usr/<span class="built_in">local</span>/python3 <span class="comment"># 指定创建的目录</span></div><div class="line"></div><div class="line">$ sudo make</div><div class="line"></div><div class="line">$ sudo make install</div></pre></td></tr></table></figure>
+<h2 id="1-3-配置"><a href="#1-3-配置" class="headerlink" title="1.3 配置"></a>1.3 配置</h2><h3 id="1-3-1-两个版本共存"><a href="#1-3-1-两个版本共存" class="headerlink" title="1.3.1 两个版本共存"></a>1.3.1 两个版本共存</h3><p>创建 python3 的软链接：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo ln <span class="_">-s</span> /usr/<span class="built_in">local</span>/python3/bin/python3 /usr/bin/python3</div></pre></td></tr></table></figure>
+<p>这样就可以通过 <code>python</code> 命令使用 Python 2，<code>python3</code> 来使用 Python 3。</p>
+<h3 id="1-3-2-修改默认为-Python-3"><a href="#1-3-2-修改默认为-Python-3" class="headerlink" title="1.3.2 修改默认为 Python 3"></a>1.3.2 修改默认为 Python 3</h3><p>将 <code>/usr/bin</code> 中的 <code>python</code> 备份</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo mv python python.bak</div></pre></td></tr></table></figure>
+<p>然后创建 python3 的软链接</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo ln <span class="_">-s</span> /usr/<span class="built_in">local</span>/python3/bin/python3 /usr/bin/python</div></pre></td></tr></table></figure>
+<p>这样默认的 Python 版本就替换为 Python 3 了。</p>
+<p>因为 yum 使用 Python 2，因此替换为 Python 3 后可能无法正常工作，因此修改 yum 配置文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo vi /usr/bin/yum</div></pre></td></tr></table></figure>
+<p>将第一行指定的 python 版本改为 python2.7（<code>#!/usr/bin/python</code> 改为 <code>#!/usr/bin/python2.7</code>）</p>
+<h1 id="二、安装-pip"><a href="#二、安装-pip" class="headerlink" title="二、安装 pip"></a>二、安装 pip</h1><h2 id="2-1-yum-安装"><a href="#2-1-yum-安装" class="headerlink" title="2.1 yum 安装"></a>2.1 yum 安装</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># 首先安装 epel 扩展源</span></div><div class="line">$ sudo yum -y install epel-release</div><div class="line"></div><div class="line"><span class="comment"># 安装 python-pip</span></div><div class="line">$ sudo yum -y install python-pip</div><div class="line"></div><div class="line"><span class="comment"># 清除 cache</span></div><div class="line">$ sudo yum clean all</div></pre></td></tr></table></figure>
+<p>通过这种方式貌似只能安装 pip2，想要安装 Python 3 的 pip，可以通过以下的源代码安装方式。</p>
+<h2 id="2-2-源码安装"><a href="#2-2-源码安装" class="headerlink" title="2.2 源码安装"></a>2.2 源码安装</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># 下载源代码</span></div><div class="line">$ wget --no-check-certificate https://github.com/pypa/pip/archive/9.0.1.tar.gz</div><div class="line"></div><div class="line">$ tar -zvxf 9.0.1 -C pip-9.0.1    <span class="comment"># 解压文件</span></div><div class="line"></div><div class="line">$ <span class="built_in">cd</span> pip-9.0.1</div><div class="line"></div><div class="line"><span class="comment"># 使用 Python 3 安装</span></div><div class="line">$ python3 setup.py install</div></pre></td></tr></table></figure>
+<p>创建链接：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo ln <span class="_">-s</span> /usr/<span class="built_in">local</span>/python3/bin/pip /usr/bin/pip3</div></pre></td></tr></table></figure>
+<h2 id="2-3-升级-pip"><a href="#2-3-升级-pip" class="headerlink" title="2.3 升级 pip"></a>2.3 升级 pip</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ pip install --upgrade pip</div></pre></td></tr></table></figure>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;CentOS 7 默认安装了 Python 2，当需要使用 Python 3 的时候，可以手动下载 Python 源码后编译安装。&lt;/p&gt;
+&lt;h1 id=&quot;一、安装-Python-3&quot;&gt;&lt;a href=&quot;#一、安装-Python-3&quot; class=&quot;headerlink&quot; title=&quot;一、安装 Python 3&quot;&gt;&lt;/a&gt;一、安装 Python 3&lt;/h1&gt;&lt;h2 id=&quot;1-1-安装准备&quot;&gt;&lt;a href=&quot;#1-1-安装准备&quot; class=&quot;headerlink&quot; title=&quot;1.1 安装准备&quot;&gt;&lt;/a&gt;1.1 安装准备&lt;/h2&gt;&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;4&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;5&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;6&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;7&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;8&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;9&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;$ sudo mkdir /usr/&lt;span class=&quot;built_in&quot;&gt;local&lt;/span&gt;/python3 &lt;span class=&quot;comment&quot;&gt;# 创建安装目录&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# 下载 Python 源文件&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;$ wget --no-check-certificate https://www.python.org/ftp/python/3.6.0/Python-3.6.0.tgz&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;# 注意：wget获取https的时候要加上：--no-check-certificate&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;$ tar -xzvf Python-3.6.0.tgz &lt;span class=&quot;comment&quot;&gt;# 解压缩包&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;$ &lt;span class=&quot;built_in&quot;&gt;cd&lt;/span&gt; Python-3.6.0 &lt;span class=&quot;comment&quot;&gt;# 进入解压目录&lt;/span&gt;&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+    
+    </summary>
+    
+      <category term="Linux" scheme="http://ehlxr.me/categories/Linux/"/>
+    
+    
+      <category term="Linux" scheme="http://ehlxr.me/tags/Linux/"/>
+    
+      <category term="CentOS" scheme="http://ehlxr.me/tags/CentOS/"/>
+    
+      <category term="Python" scheme="http://ehlxr.me/tags/Python/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Good bye 2016...</title>
+    <link href="http://ehlxr.me/2016/12/31/Good-bye-2016/"/>
+    <id>http://ehlxr.me/2016/12/31/Good-bye-2016/</id>
+    <published>2016-12-31T12:51:14.000Z</published>
+    <updated>2017-01-10T03:26:27.317Z</updated>
+    
+    <content type="html"><![CDATA[<p>时光飞逝，转眼间，2016 年已经在今天画上句号，结束了，再提起 2016 年就已经是过往了…</p>
+<p>印象中，十年应该要算是很长的一段时间吧，但仔细一琢磨十年前也就才 2006 年…那时候是高中，每天除了上课就是写作业，学习很枯燥总感觉时间很多，憧憬着美好的未来，过着也算是无忧无虑生活。每天放学，下晚自习，总是很快的骑着自行车冲出校门口，因为晚了学生会很多，那时候骑自行车一个比一个快。周五不用上晚自习，三五成群去网吧通宵，包宿八块钱八个小时，从晚上十点到第二天早上六点，六点从网吧出来总会有种恍如隔世的感觉，大街上几乎没有人，回出租屋睡上一天，感觉就是一周最美好的时光了！看着别的同学拿着小灵通、MP3 ，很羡慕，自已也想要有一个，都不敢奢望能有一台电脑…一切仿佛也就是昨天而已，但是已经十年之前了，不禁一颤，人生能有几个十年…</p>
+<a id="more"></a>
+<p>总结 2016，收获，知足，感恩…眼前的要珍惜，来之不易的拥有更要珍惜。</p>
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="100%" height="86" src="//music.163.com/outchain/player?type=2&id=35307971&auto=1&height=66"></iframe>
+
+<hr>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;时光飞逝，转眼间，2016 年已经在今天画上句号，结束了，再提起 2016 年就已经是过往了…&lt;/p&gt;
+&lt;p&gt;印象中，十年应该要算是很长的一段时间吧，但仔细一琢磨十年前也就才 2006 年…那时候是高中，每天除了上课就是写作业，学习很枯燥总感觉时间很多，憧憬着美好的未来，过着也算是无忧无虑生活。每天放学，下晚自习，总是很快的骑着自行车冲出校门口，因为晚了学生会很多，那时候骑自行车一个比一个快。周五不用上晚自习，三五成群去网吧通宵，包宿八块钱八个小时，从晚上十点到第二天早上六点，六点从网吧出来总会有种恍如隔世的感觉，大街上几乎没有人，回出租屋睡上一天，感觉就是一周最美好的时光了！看着别的同学拿着小灵通、MP3 ，很羡慕，自已也想要有一个，都不敢奢望能有一台电脑…一切仿佛也就是昨天而已，但是已经十年之前了，不禁一颤，人生能有几个十年…&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="杂谈" scheme="http://ehlxr.me/categories/%E6%9D%82%E8%B0%88/"/>
+    
+    
+      <category term="杂谈" scheme="http://ehlxr.me/tags/%E6%9D%82%E8%B0%88/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>[转]Linux shell 中单引号、双引号、反引号、反斜杠的区别</title>
+    <link href="http://ehlxr.me/2016/12/30/%E8%BD%AC-Linux-shell-%E4%B8%AD%E5%8D%95%E5%BC%95%E5%8F%B7%E3%80%81%E5%8F%8C%E5%BC%95%E5%8F%B7%E3%80%81%E5%8F%8D%E5%BC%95%E5%8F%B7%E3%80%81%E5%8F%8D%E6%96%9C%E6%9D%A0%E7%9A%84%E5%8C%BA%E5%88%AB/"/>
+    <id>http://ehlxr.me/2016/12/30/转-Linux-shell-中单引号、双引号、反引号、反斜杠的区别/</id>
+    <published>2016-12-30T15:36:51.000Z</published>
+    <updated>2017-01-10T03:26:27.317Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p><code>shell</code> 可以识别 <code>4</code> 种不同类型的引字符号：单引号字符 <code>&#39;</code>，双引号字符 <code>&quot;</code>，反斜杠字符 <code>\</code>，反引号字符 <code>`</code> ，学习 <code>shell</code> 编程的朋友可以看下。</p>
+</blockquote>
+<h1 id="1-单引号-39"><a href="#1-单引号-39" class="headerlink" title="1. 单引号( &#39; )"></a>1. 单引号( <code>&#39;</code> )</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ grep Susan phonebook</div><div class="line">Susan Goldberg 403-212-4921</div><div class="line">Susan Topple 212-234-2343</div></pre></td></tr></table></figure>
+<p>如果我们想查找的是 <code>Susan Goldberg</code>，不能直接使用 <code>grep Susan Goldberg phonebook</code> 命令，<code>grep</code> 会把 <code>Goldberg</code> 和 <code>phonebook</code> 当作需要搜索的文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ grep &apos;Susan Gold&apos; phonebook</div><div class="line">Susan Goldberg 403-212-4921</div></pre></td></tr></table></figure>
+<p>当 <code>shell</code> 碰到第一个单引号时，它忽略掉其后直到右引号的所有特殊字符。<br><a id="more"></a></p>
+<h1 id="2-双引号-quot"><a href="#2-双引号-quot" class="headerlink" title="2. 双引号( &quot; )"></a>2. 双引号( <code>&quot;</code> )</h1><p>双引号作用与单引号类似，区别在于它没有那么严格。单引号告诉 <code>shell</code> 忽略所有特殊字符，而双引号只要求忽略大多数，具体说，括在双引号中的三种特殊字符不被忽略：<code>$</code>、<code>\</code>、<code>`</code>。即双引号会解释字符串的特别意思，而单引号直接使用字符串。如果使用双引号将字符串赋给变量并反馈它，实际上与直接反馈变量并无差别。如果要查询包含空格的字符串，经常会用到双引号。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">$ x=*</div><div class="line">$ echo $x</div><div class="line">hello.sh menus.sh misc.sh phonebook tshift.sh</div><div class="line"></div><div class="line">$ echo &apos;$x&apos;</div><div class="line">$x</div><div class="line"></div><div class="line">$ echo &quot;$x&quot;</div><div class="line">*</div></pre></td></tr></table></figure>
+<p>这个例子可以看出无引号，单引号和双引号之间的区别。在最后一种情况中，双引号告诉 <code>shell</code> 在引号内照样进行变量名替换，所以 <code>shell</code> 把 <code>$x</code> 替换为 <code>＊</code>，因为双引号中不做文件名替换，所以就把 <code>＊</code> 作为要显示的值传递给 <code>echo</code>。</p>
+<p>对于第一种情况需要进一步说明，<code>shell</code> 在给变量赋值时不进行文件名替换（这从第三种情况中也能看出来），各步骤发生的精确次序如下： <code>shell</code> 扫描命令行，把 <code>x</code> 的值设为星号 <code>＊</code>；<br><code>shell</code> 再次扫描命令行，碰到星号 <code>＊</code>，把它替换成当前目录下的文件清单；<code>shell</code> 启动执行 <code>echo</code> 命令，把文件清单作为参数传递给 <code>echo</code>。</p>
+<p>这个赋值的先后次序非常重要：<code>shell</code> 先作变量替换，然后作文件名替换，最后把这行处理为参数。</p>
+<h1 id="3-反引号"><a href="#3-反引号" class="headerlink" title="3. 反引号(`)"></a>3. 反引号(<code>`</code>)</h1><p>命令替换是指 <code>shell</code> 能够将一个命令的标准输出插在一个命令行中任何位置。<code>shell</code> 中有两种方法作命令替换：把 <code>shell</code> 命令用反引号或者 <code>$(...)</code> 结构括起来，其中 <code>$(...)</code> 格式受到 <code>POSIX</code> 标准支持，也利于嵌套。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ echo The date and time is `date`</div><div class="line">The date and time is 2016年 12月 28日 星期三 16:15:44 CST</div><div class="line"></div><div class="line">$ echo The date and time is $(date)</div><div class="line">The date and time is 2016年 12月 28日 星期三 16:15:44 CST</div><div class="line"></div><div class="line">$ echo Your current working directory is $(pwd)</div><div class="line">Your current working directory is /home/howard/script</div></pre></td></tr></table></figure>
+<h1 id="4-反斜杠-backslash-escaped"><a href="#4-反斜杠-backslash-escaped" class="headerlink" title="4. 反斜杠 backslash-escaped( \ )"></a>4. 反斜杠 backslash-escaped( <code>\</code> )</h1><p>反斜杠一般用作转义字符，或称逃脱字符。<code>Linux</code> 如果 <code>echo</code> 要让转义字符发生作用，就要使用 <code>-e</code> 选项，且转义字符要使用双引号。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">echo -e &quot;\n&quot;</div></pre></td></tr></table></figure>
+<p>反斜杠的另一种作用，就是当反斜杠用于一行的最后一个字符时，<strong><code>shell</code> 把行尾的反斜杠作为续行</strong>，这种结构在分几行输入长命令时经常使用。</p>
+<hr>
+<p><a href="http://www.jb51.net/article/33495.htm" target="_blank" rel="external">原文地址</a></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;shell&lt;/code&gt; 可以识别 &lt;code&gt;4&lt;/code&gt; 种不同类型的引字符号：单引号字符 &lt;code&gt;&amp;#39;&lt;/code&gt;，双引号字符 &lt;code&gt;&amp;quot;&lt;/code&gt;，反斜杠字符 &lt;code&gt;\&lt;/code&gt;，反引号字符 &lt;code&gt;`&lt;/code&gt; ，学习 &lt;code&gt;shell&lt;/code&gt; 编程的朋友可以看下。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h1 id=&quot;1-单引号-39&quot;&gt;&lt;a href=&quot;#1-单引号-39&quot; class=&quot;headerlink&quot; title=&quot;1. 单引号( &amp;#39; )&quot;&gt;&lt;/a&gt;1. 单引号( &lt;code&gt;&amp;#39;&lt;/code&gt; )&lt;/h1&gt;&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;$ grep Susan phonebook&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;Susan Goldberg 403-212-4921&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;Susan Topple 212-234-2343&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;如果我们想查找的是 &lt;code&gt;Susan Goldberg&lt;/code&gt;，不能直接使用 &lt;code&gt;grep Susan Goldberg phonebook&lt;/code&gt; 命令，&lt;code&gt;grep&lt;/code&gt; 会把 &lt;code&gt;Goldberg&lt;/code&gt; 和 &lt;code&gt;phonebook&lt;/code&gt; 当作需要搜索的文件。&lt;/p&gt;
+&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;$ grep &amp;apos;Susan Gold&amp;apos; phonebook&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;Susan Goldberg 403-212-4921&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;当 &lt;code&gt;shell&lt;/code&gt; 碰到第一个单引号时，它忽略掉其后直到右引号的所有特殊字符。&lt;br&gt;
+    
+    </summary>
+    
+      <category term="Linux" scheme="http://ehlxr.me/categories/Linux/"/>
+    
+    
+      <category term="Linux" scheme="http://ehlxr.me/tags/Linux/"/>
+    
+      <category term="shell" scheme="http://ehlxr.me/tags/shell/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>CentOS 安装 Nginx</title>
+    <link href="http://ehlxr.me/2016/12/23/CentOS-%E5%AE%89%E8%A3%85-Nginx/"/>
+    <id>http://ehlxr.me/2016/12/23/CentOS-安装-Nginx/</id>
+    <published>2016-12-23T11:20:44.000Z</published>
+    <updated>2017-01-10T03:26:27.317Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="一、安装准备"><a href="#一、安装准备" class="headerlink" title="一、安装准备"></a>一、安装准备</h1><p>首先由于 Nginx 的一些模块依赖一些 lib 库，所以在安装 Nginx 之前，必须先安装这些 lib 库，这些依赖库主要有 g++、gcc、openssl-devel、pcre-devel 和 zlib-devel，执行如下命令安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ yum install gcc-c++</div><div class="line">$ yum install pcre pcre-devel</div><div class="line">$ yum install zlib zlib-devel</div><div class="line">$ yum install openssl openssl--devel</div></pre></td></tr></table></figure>
+<h1 id="二、安装-Nginx"><a href="#二、安装-Nginx" class="headerlink" title="二、安装 Nginx"></a>二、安装 Nginx</h1><p>安装之前，最好检查一下是否已经安装有 Nginx</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ find -name nginx</div></pre></td></tr></table></figure>
+<a id="more"></a>
+<p>如果系统已经安装了 Nginx，那么就先卸载</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ yum remove nginx</div></pre></td></tr></table></figure>
+<p>首先进入 /usr/local 目录</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">cd</span> /usr/<span class="built_in">local</span></div></pre></td></tr></table></figure>
+<p>从官网下载最新版的 Nginx</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ wget http://nginx.org/download/nginx-1.9.6.tar.gz</div><div class="line">$ tar -zxvf nginx-1.9.6.tar.gz</div><div class="line">$ <span class="built_in">cd</span> nginx-1.9.6</div></pre></td></tr></table></figure>
+<p>接下来安装，使用 <code>--prefix</code> 参数指定 Nginx 安装的目录</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ./configure  <span class="comment"># 默认安装在 /usr/local/nginx</span></div><div class="line">$ make</div><div class="line">$ make install</div></pre></td></tr></table></figure>
+<p>如果没有报错，顺利完成后，最好看一下 nginx 的安装目录</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ whereis nginx</div></pre></td></tr></table></figure>
+<p>安装完毕后，进入安装后目录（/usr/local/nginx）便可以启动或停止它了。</p>
+<h1 id="二、基本操作命令"><a href="#二、基本操作命令" class="headerlink" title="二、基本操作命令"></a>二、基本操作命令</h1><h2 id="2-1-启动命令"><a href="#2-1-启动命令" class="headerlink" title="2.1 启动命令"></a>2.1 启动命令</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">/usr/<span class="built_in">local</span>/nginx/sbin/nginx -c /usr/<span class="built_in">local</span>/nginx/conf/nginx.conf</div></pre></td></tr></table></figure>
+<h2 id="2-2-重启命令"><a href="#2-2-重启命令" class="headerlink" title="2.2 重启命令"></a>2.2 重启命令</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">/usr/<span class="built_in">local</span>/nginx/sbin/nginx -c /usr/<span class="built_in">local</span>/nginx/conf/nginx.conf <span class="_">-s</span> reload</div></pre></td></tr></table></figure>
+<h2 id="2-3-停止命令"><a href="#2-3-停止命令" class="headerlink" title="2.3 停止命令"></a>2.3 停止命令</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">/usr/<span class="built_in">local</span>/nginx/sbin/nginx -c /usr/<span class="built_in">local</span>/nginx/conf/nginx.conf  <span class="_">-s</span> stop</div></pre></td></tr></table></figure>
+<p><code>-c</code> 制定配置文件的路径，如果不加 Nginx 会自动加载默认路径的配置文件。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;一、安装准备&quot;&gt;&lt;a href=&quot;#一、安装准备&quot; class=&quot;headerlink&quot; title=&quot;一、安装准备&quot;&gt;&lt;/a&gt;一、安装准备&lt;/h1&gt;&lt;p&gt;首先由于 Nginx 的一些模块依赖一些 lib 库，所以在安装 Nginx 之前，必须先安装这些 lib 库，这些依赖库主要有 g++、gcc、openssl-devel、pcre-devel 和 zlib-devel，执行如下命令安装：&lt;/p&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;4&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;$ yum install gcc-c++&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;$ yum install pcre pcre-devel&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;$ yum install zlib zlib-devel&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;$ yum install openssl openssl--devel&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;h1 id=&quot;二、安装-Nginx&quot;&gt;&lt;a href=&quot;#二、安装-Nginx&quot; class=&quot;headerlink&quot; title=&quot;二、安装 Nginx&quot;&gt;&lt;/a&gt;二、安装 Nginx&lt;/h1&gt;&lt;p&gt;安装之前，最好检查一下是否已经安装有 Nginx&lt;/p&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;$ find -name nginx&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+    
+    </summary>
+    
+      <category term="Linux" scheme="http://ehlxr.me/categories/Linux/"/>
+    
+    
+      <category term="Linux" scheme="http://ehlxr.me/tags/Linux/"/>
+    
+      <category term="CentOS" scheme="http://ehlxr.me/tags/CentOS/"/>
+    
+      <category term="Nginx" scheme="http://ehlxr.me/tags/Nginx/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>CentOS 安装 rar、zip 解压缩</title>
+    <link href="http://ehlxr.me/2016/12/22/CentOS-%E5%AE%89%E8%A3%85-rar%E3%80%81zip-%E8%A7%A3%E5%8E%8B%E7%BC%A9/"/>
+    <id>http://ehlxr.me/2016/12/22/CentOS-安装-rar、zip-解压缩/</id>
+    <published>2016-12-22T15:39:45.000Z</published>
+    <updated>2017-01-10T03:26:27.318Z</updated>
+    
+    <content type="html"><![CDATA[<p>Windows 系统压缩的 rar 和 zip 文件，在 Linux 系统下是无法通过 tar 命令解压缩的，需要使用 rar 和 zip 命令来解压缩。下面记录一下 rar 和 zip 安装和简单的使用。</p>
+<h1 id="一、rar-安装使用"><a href="#一、rar-安装使用" class="headerlink" title="一、rar 安装使用"></a>一、rar 安装使用</h1><p>Linux 系统下使用 rarlinux 解压缩 rar 压缩文件，下载页面：<a href="http://www.rarsoft.com/download.htm。" target="_blank" rel="external">http://www.rarsoft.com/download.htm。</a></p>
+<h2 id="1-1-下载系统对应的版本"><a href="#1-1-下载系统对应的版本" class="headerlink" title="1.1 下载系统对应的版本"></a>1.1 下载系统对应的版本</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ wget http://www.rarsoft.com/rar/rarlinux-x64-5.4.0.tar.gz</div></pre></td></tr></table></figure>
+<h2 id="1-2-解压、安装"><a href="#1-2-解压、安装" class="headerlink" title="1.2 解压、安装"></a>1.2 解压、安装</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ tar -zxvf rarlinux-x64-5.4.0.tar.gz</div><div class="line">$ <span class="built_in">cd</span> rar</div><div class="line">$ make</div></pre></td></tr></table></figure>
+<a id="more"></a>
+<p>看见下面这些信息就是安装成功了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">mkdir -p /usr/<span class="built_in">local</span>/bin</div><div class="line">mkdir -p /usr/<span class="built_in">local</span>/lib</div><div class="line">cp rar unrar /usr/<span class="built_in">local</span>/bin</div><div class="line">cp rarfiles.lst /etc</div><div class="line">cp default.sfx /usr/<span class="built_in">local</span>/lib</div></pre></td></tr></table></figure>
+<h2 id="1-3-常用-rar-命令"><a href="#1-3-常用-rar-命令" class="headerlink" title="1.3 常用 rar 命令"></a>1.3 常用 rar 命令</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ rar x centos.rar <span class="comment"># 解压 centos.rar 到当前目录</span></div><div class="line">$ rar centos.rar ./piaoyi.org/ <span class="comment"># 将 piaoyi.org 目录打包为 centos.rar</span></div></pre></td></tr></table></figure>
+<h2 id="1-4-常见错误原因分析"><a href="#1-4-常见错误原因分析" class="headerlink" title="1.4 常见错误原因分析"></a>1.4 常见错误原因分析</h2><h3 id="1-4-1-如果在运行命令-rar-时-出现下面这个问题"><a href="#1-4-1-如果在运行命令-rar-时-出现下面这个问题" class="headerlink" title="1.4.1 如果在运行命令 rar 时,出现下面这个问题"></a>1.4.1 如果在运行命令 rar 时,出现下面这个问题</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">rar: /lib/i686/nosegneg/libc.so.6: version <span class="string">'GLIBC_2.7'</span> not found (required by rar)</div></pre></td></tr></table></figure>
+<p>解决办法：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ cp rar_static /usr/<span class="built_in">local</span>/bin/rar</div></pre></td></tr></table></figure>
+<h3 id="1-4-2-使用-rar-的时候出现错误"><a href="#1-4-2-使用-rar-的时候出现错误" class="headerlink" title="1.4.2 使用 rar 的时候出现错误"></a>1.4.2 使用 rar 的时候出现错误</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">bash: /usr/<span class="built_in">local</span>/bin/rar: /lib/ld-linux.so.2: bad ELF interpreter: No such file or directory</div></pre></td></tr></table></figure>
+<p>因为 64 位系统中安装了 32 位程序，解决方法：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ yum install glibc.i686</div></pre></td></tr></table></figure>
+<h3 id="1-4-3-重新安装-glibc-i686-以后还有如下类似错误"><a href="#1-4-3-重新安装-glibc-i686-以后还有如下类似错误" class="headerlink" title="1.4.3 重新安装 glibc.i686 以后还有如下类似错误"></a>1.4.3 重新安装 glibc.i686 以后还有如下类似错误</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">error <span class="keyword">while</span> loading shared libraries: libstdc++.so.6: cannot open shared object file: No such file or directory</div></pre></td></tr></table></figure>
+<p>再继续安装包：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ yum install libstdc++.so.6</div></pre></td></tr></table></figure>
+<h1 id="二、zip-unzip-安装使用"><a href="#二、zip-unzip-安装使用" class="headerlink" title="二、zip/unzip 安装使用"></a>二、zip/unzip 安装使用</h1><h2 id="2-1-检查是否有包含-zip（unzip）-的软件包"><a href="#2-1-检查是否有包含-zip（unzip）-的软件包" class="headerlink" title="2.1 检查是否有包含 zip（unzip） 的软件包"></a>2.1 检查是否有包含 zip（unzip） 的软件包</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">$ yum provides zip</div><div class="line">Loaded plugins: fastestmirror</div><div class="line">Loading mirror speeds from cached hostfile</div><div class="line"> * base: mirrors.cqu.edu.cn</div><div class="line"> * extras: mirrors.cqu.edu.cn</div><div class="line"> * updates: mirrors.tuna.tsinghua.edu.cn</div><div class="line">zip-3.0-11.el7.x86_64 : A file compression and packaging utility compatible with PKZIP</div><div class="line">Repo        : base</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">zip-3.0-11.el7.x86_64 : A file compression and packaging utility compatible with PKZIP</div><div class="line">Repo        : @base</div></pre></td></tr></table></figure>
+<h2 id="2-2-安装-zip、unzip"><a href="#2-2-安装-zip、unzip" class="headerlink" title="2.2 安装 zip、unzip"></a>2.2 安装 zip、unzip</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ yum install zip</div><div class="line">$ yum install unzip</div></pre></td></tr></table></figure>
+<h2 id="2-3-常用命令"><a href="#2-3-常用命令" class="headerlink" title="2.3 常用命令"></a>2.3 常用命令</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">$ zip -r myfile.zip ./*</div><div class="line"><span class="comment"># 将当前目录下的所有文件和文件夹全部压缩成 myfile.zip 文件，-r 表示递归压缩子目录下所有文件.</span></div><div class="line"></div><div class="line">$ unzip -o <span class="_">-d</span> /home/sunny myfile.zip</div><div class="line"><span class="comment"># 把 myfile.zip 文件解压到 /home/sunny/</span></div><div class="line"><span class="comment"># -o ：不提示的情况下覆盖文件</span></div><div class="line"><span class="comment"># -d：将文件解压缩到指定目录下</span></div><div class="line"></div><div class="line">$ zip <span class="_">-d</span> myfile.zip smart.txt</div><div class="line"><span class="comment"># 删除压缩文件中 smart.txt 文件</span></div><div class="line"></div><div class="line">$ zip -m myfile.zip ./rpm_info.txt</div><div class="line"><span class="comment"># 向压缩文件中 myfile.zip 中添加 rpm_info.txt 文件</span></div></pre></td></tr></table></figure>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;Windows 系统压缩的 rar 和 zip 文件，在 Linux 系统下是无法通过 tar 命令解压缩的，需要使用 rar 和 zip 命令来解压缩。下面记录一下 rar 和 zip 安装和简单的使用。&lt;/p&gt;
+&lt;h1 id=&quot;一、rar-安装使用&quot;&gt;&lt;a href=&quot;#一、rar-安装使用&quot; class=&quot;headerlink&quot; title=&quot;一、rar 安装使用&quot;&gt;&lt;/a&gt;一、rar 安装使用&lt;/h1&gt;&lt;p&gt;Linux 系统下使用 rarlinux 解压缩 rar 压缩文件，下载页面：&lt;a href=&quot;http://www.rarsoft.com/download.htm。&quot;&gt;http://www.rarsoft.com/download.htm。&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&quot;1-1-下载系统对应的版本&quot;&gt;&lt;a href=&quot;#1-1-下载系统对应的版本&quot; class=&quot;headerlink&quot; title=&quot;1.1 下载系统对应的版本&quot;&gt;&lt;/a&gt;1.1 下载系统对应的版本&lt;/h2&gt;&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;$ wget http://www.rarsoft.com/rar/rarlinux-x64-5.4.0.tar.gz&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;h2 id=&quot;1-2-解压、安装&quot;&gt;&lt;a href=&quot;#1-2-解压、安装&quot; class=&quot;headerlink&quot; title=&quot;1.2 解压、安装&quot;&gt;&lt;/a&gt;1.2 解压、安装&lt;/h2&gt;&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;$ tar -zxvf rarlinux-x64-5.4.0.tar.gz&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;$ &lt;span class=&quot;built_in&quot;&gt;cd&lt;/span&gt; rar&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;$ make&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+    
+    </summary>
+    
+      <category term="Linux" scheme="http://ehlxr.me/categories/Linux/"/>
+    
+    
+      <category term="Linux" scheme="http://ehlxr.me/tags/Linux/"/>
+    
+      <category term="CentOS" scheme="http://ehlxr.me/tags/CentOS/"/>
+    
+      <category term="rar" scheme="http://ehlxr.me/tags/rar/"/>
+    
+      <category term="zip" scheme="http://ehlxr.me/tags/zip/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Vim Tab 设置为 4 个空格</title>
+    <link href="http://ehlxr.me/2016/12/02/Vim-Tab-%E8%AE%BE%E7%BD%AE%E4%B8%BA-4-%E4%B8%AA%E7%A9%BA%E6%A0%BC/"/>
+    <id>http://ehlxr.me/2016/12/02/Vim-Tab-设置为-4-个空格/</id>
+    <published>2016-12-02T20:46:05.000Z</published>
+    <updated>2017-01-10T03:26:27.318Z</updated>
+    
+    <content type="html"><![CDATA[<p>在 <code>vim</code> 的配置文件中（Liunx：<code>/etc/vimrc</code>）中添加以下代码后，重启 <code>vim</code> 即可实现按 <code>TAB</code> 产生 <code>4</code> 个空格：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">set</span> ts=4 <span class="comment"># 注：ts 是 tabstop 的缩写，设 TAB 宽 4 个空格</span></div><div class="line"><span class="built_in">set</span> expandtab</div></pre></td></tr></table></figure>
+<p>对于已保存的文件，可以使用下面的方法进行空格和 <code>TAB</code> 的替换：</p>
+<p><code>TAB</code> 替换为空格：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">:<span class="built_in">set</span> ts=4</div><div class="line">:<span class="built_in">set</span> expandtab</div><div class="line">:%retab!</div></pre></td></tr></table></figure>
+<a id="more"></a>
+<p>空格替换为 <code>TAB</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">:<span class="built_in">set</span> ts=4</div><div class="line">:<span class="built_in">set</span> noexpandtab</div><div class="line">:%retab!</div></pre></td></tr></table></figure>
+<p>加 <code>!</code> 是用于处理非空白字符之后的 <code>TAB</code>，即所有的 <code>TAB</code>，若不加 <code>!</code>，则只处理行首的 <code>TAB</code>。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;在 &lt;code&gt;vim&lt;/code&gt; 的配置文件中（Liunx：&lt;code&gt;/etc/vimrc&lt;/code&gt;）中添加以下代码后，重启 &lt;code&gt;vim&lt;/code&gt; 即可实现按 &lt;code&gt;TAB&lt;/code&gt; 产生 &lt;code&gt;4&lt;/code&gt; 个空格：&lt;/p&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;built_in&quot;&gt;set&lt;/span&gt; ts=4 &lt;span class=&quot;comment&quot;&gt;# 注：ts 是 tabstop 的缩写，设 TAB 宽 4 个空格&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;span class=&quot;built_in&quot;&gt;set&lt;/span&gt; expandtab&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;对于已保存的文件，可以使用下面的方法进行空格和 &lt;code&gt;TAB&lt;/code&gt; 的替换：&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;TAB&lt;/code&gt; 替换为空格：&lt;/p&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;:&lt;span class=&quot;built_in&quot;&gt;set&lt;/span&gt; ts=4&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;:&lt;span class=&quot;built_in&quot;&gt;set&lt;/span&gt; expandtab&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;:%retab!&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+    
+    </summary>
+    
+      <category term="开发工具" scheme="http://ehlxr.me/categories/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/"/>
+    
+    
+      <category term="Vim" scheme="http://ehlxr.me/tags/Vim/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>忙忙碌碌的十一月份</title>
+    <link href="http://ehlxr.me/2016/11/30/%E5%BF%99%E5%BF%99%E7%A2%8C%E7%A2%8C%E7%9A%84%E5%8D%81%E4%B8%80%E6%9C%88%E4%BB%BD/"/>
+    <id>http://ehlxr.me/2016/11/30/忙忙碌碌的十一月份/</id>
+    <published>2016-11-30T20:04:13.000Z</published>
+    <updated>2017-01-10T03:26:27.317Z</updated>
+    
+    <content type="html"><![CDATA[<p>早就有计划在西安买房，一直觉得还早，主要是没钱，近期有人肯借钱就想看看市场。买房需要做很多准备工作，本想着慢慢先看着，一边从同学朋友那里打听消息，一边从网上看各个楼盘信息，怎奈越看越着急，就想一下子赶紧买了。看中的两个楼盘，价格其实都远远超过自己的预算和目前能承受的能力，不得不说我是一个容易被蛊惑的人，听着置业顾问的天花乱坠的描述，有好几次都差点都掉坑里了。</p>
+<p><img src="http://oapjp6spr.bkt.clouddn.com/20161130202110.jpg" alt=""></p>
+<a id="more"></a>
+<p>不得不吐槽ZF的户口、档案制度，不知道坑了多少人。上大学的时候响应学校的号召，傻乎乎的把户口从老家迁到了学校，现在也没想明白把户口迁过去是为了什么。毕业后二不拉几的嫌麻烦就随大流没有及时把户口、档案迁回去。买房按揭要户口，才意识到这个大坑不尽早填上只会越来越麻烦。为了搞清楚怎样能把户口迁回去，我战战兢兢的打通了相关部门的服务电话号（还好还好，才打了几十次就有人接听了），服务态度和传说中的“为人民服务”一样，果然没让我失望，折腾了整整一天，总算搞明白了大概该怎么弄。还好有同学在，不用自己再去跑一趟，准备好相关的资料邮寄过去就只能祈祷了…</p>
+<p>听说十二月份房价要涨，今天最后一天了，中介也“劝告”了我好几次赶紧出手，自己也心动了无数次。十一月份马上结束了，纠结的心该平静了些了，终究还是没有出手…</p>
+<hr>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;早就有计划在西安买房，一直觉得还早，主要是没钱，近期有人肯借钱就想看看市场。买房需要做很多准备工作，本想着慢慢先看着，一边从同学朋友那里打听消息，一边从网上看各个楼盘信息，怎奈越看越着急，就想一下子赶紧买了。看中的两个楼盘，价格其实都远远超过自己的预算和目前能承受的能力，不得不说我是一个容易被蛊惑的人，听着置业顾问的天花乱坠的描述，有好几次都差点都掉坑里了。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://oapjp6spr.bkt.clouddn.com/20161130202110.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="杂谈" scheme="http://ehlxr.me/categories/%E6%9D%82%E8%B0%88/"/>
+    
+    
+      <category term="杂谈" scheme="http://ehlxr.me/tags/%E6%9D%82%E8%B0%88/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>[转]Linux 查看系统内核版本和发行版本</title>
+    <link href="http://ehlxr.me/2016/11/18/%E8%BD%AC-Linux-%E6%9F%A5%E7%9C%8B%E7%B3%BB%E7%BB%9F%E5%86%85%E6%A0%B8%E7%89%88%E6%9C%AC%E5%92%8C%E5%8F%91%E8%A1%8C%E7%89%88%E6%9C%AC/"/>
+    <id>http://ehlxr.me/2016/11/18/转-Linux-查看系统内核版本和发行版本/</id>
+    <published>2016-11-18T14:56:43.000Z</published>
+    <updated>2017-01-10T03:26:27.317Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="一、查看-Linux-内核版本命令"><a href="#一、查看-Linux-内核版本命令" class="headerlink" title="一、查看 Linux 内核版本命令"></a>一、查看 Linux 内核版本命令</h1><p>以下两条命令适合所有 <code>Linux</code> 系统。</p>
+<h2 id="1、cat-proc-version"><a href="#1、cat-proc-version" class="headerlink" title="1、cat /proc/version"></a>1、cat /proc/version</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ cat /proc/version</div><div class="line">Linux version 3.10.0-327.el7.x86_64 (builder@kbuilder.dev.centos.org) (gcc version 4.8.3 20140911 (Red Hat 4.8.3-9) (GCC) ) <span class="comment">#1 SMP Thu Nov 19 22:10:57 UTC 2015</span></div><div class="line"></div><div class="line">➜  ~ cat /proc/version   </div><div class="line">Linux version 4.4.0-36-generic (buildd@lcy01-01) (gcc version 5.4.0 20160609 (Ubuntu 5.4.0-6ubuntu1~16.04.2) ) <span class="comment">#55-Ubuntu SMP Thu Aug 11 18:01:55 UTC 2016</span></div></pre></td></tr></table></figure>
+<h2 id="2、uname-a"><a href="#2、uname-a" class="headerlink" title="2、uname -a"></a>2、uname -a</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ uname <span class="_">-a</span></div><div class="line">Linux centos 3.10.0-327.el7.x86_64 <span class="comment">#1 SMP Thu Nov 19 22:10:57 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux</span></div><div class="line"></div><div class="line">➜  ~ uname <span class="_">-a</span></div><div class="line">Linux www 4.4.0-36-generic <span class="comment">#55-Ubuntu SMP Thu Aug 11 18:01:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux</span></div></pre></td></tr></table></figure>
+<a id="more"></a>
+<h1 id="二、查看-Linux-系统版本的命令"><a href="#二、查看-Linux-系统版本的命令" class="headerlink" title="二、查看 Linux 系统版本的命令"></a>二、查看 Linux 系统版本的命令</h1><h2 id="1、lsb-release-a"><a href="#1、lsb-release-a" class="headerlink" title="1、lsb_release -a"></a>1、lsb_release -a</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">$ lsb_release <span class="_">-a</span></div><div class="line">LSB Version:    :core-4.1-amd64:core-4.1-noarch</div><div class="line">Distributor ID: CentOS</div><div class="line">Description:    CentOS Linux release 7.2.1511 (Core)</div><div class="line">Release:        7.2.1511</div><div class="line">Codename:       Core</div><div class="line"></div><div class="line">➜  ~ lsb_release <span class="_">-a</span></div><div class="line">No LSB modules are available.</div><div class="line">Distributor ID: Ubuntu</div><div class="line">Description:    Ubuntu 16.04.1 LTS</div><div class="line">Release:    16.04</div><div class="line">Codename:   xenial</div></pre></td></tr></table></figure>
+<p>这个命令适用于所有的 <code>Linux</code> 发行版，包括 <code>Redhat</code>、<code>SuSE</code>、<code>Debian…</code> 等发行版。</p>
+<p>有的系统中默认并没有安装 <code>lsb_release</code>，需要安装。下面介绍一下 <code>CentOS</code> 系统中安装方法。</p>
+<p>首先查找 <code>lsb_release</code> 安装包：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">$ yum provides lsb_release</div><div class="line">已加载插件：fastestmirror</div><div class="line">Loading mirror speeds from cached hostfile</div><div class="line"> * base: mirrors.btte.net</div><div class="line"> * extras: mirrors.btte.net</div><div class="line"> * updates: mirrors.btte.net</div><div class="line">redhat-lsb-core-4.1-27.el7.centos.1.i686 : LSB Core module support</div><div class="line">源    ：base</div><div class="line">匹配来源：</div><div class="line">文件名    ：/usr/bin/lsb_release</div></pre></td></tr></table></figure>
+<p>安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo yum install -y redhat-lsb-core</div></pre></td></tr></table></figure>
+<h2 id="2、cat-etc-redhat-release"><a href="#2、cat-etc-redhat-release" class="headerlink" title="2、cat /etc/redhat-release"></a>2、cat /etc/redhat-release</h2><p>这种方法只适合查看 <code>Redhat</code> 系的 <code>Linux</code>，如：<code>CentOS</code>。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ cat /etc/redhat-release</div><div class="line">CentOS Linux release 7.2.1511 (Core)</div></pre></td></tr></table></figure>
+<h2 id="3、cat-etc-issue"><a href="#3、cat-etc-issue" class="headerlink" title="3、cat /etc/issue"></a>3、cat /etc/issue</h2><p>此命令适用于所有的 <code>Linux</code> 发行版。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">➜  ~ cat /etc/issue</div><div class="line">Ubuntu 16.04.1 LTS \n \l</div></pre></td></tr></table></figure>]]></content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;一、查看-Linux-内核版本命令&quot;&gt;&lt;a href=&quot;#一、查看-Linux-内核版本命令&quot; class=&quot;headerlink&quot; title=&quot;一、查看 Linux 内核版本命令&quot;&gt;&lt;/a&gt;一、查看 Linux 内核版本命令&lt;/h1&gt;&lt;p&gt;以下两条命令适合所有 &lt;code&gt;Linux&lt;/code&gt; 系统。&lt;/p&gt;
+&lt;h2 id=&quot;1、cat-proc-version&quot;&gt;&lt;a href=&quot;#1、cat-proc-version&quot; class=&quot;headerlink&quot; title=&quot;1、cat /proc/version&quot;&gt;&lt;/a&gt;1、cat /proc/version&lt;/h2&gt;&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;4&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;5&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;$ cat /proc/version&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;Linux version 3.10.0-327.el7.x86_64 (builder@kbuilder.dev.centos.org) (gcc version 4.8.3 20140911 (Red Hat 4.8.3-9) (GCC) ) &lt;span class=&quot;comment&quot;&gt;#1 SMP Thu Nov 19 22:10:57 UTC 2015&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;➜  ~ cat /proc/version   &lt;/div&gt;&lt;div class=&quot;line&quot;&gt;Linux version 4.4.0-36-generic (buildd@lcy01-01) (gcc version 5.4.0 20160609 (Ubuntu 5.4.0-6ubuntu1~16.04.2) ) &lt;span class=&quot;comment&quot;&gt;#55-Ubuntu SMP Thu Aug 11 18:01:55 UTC 2016&lt;/span&gt;&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;h2 id=&quot;2、uname-a&quot;&gt;&lt;a href=&quot;#2、uname-a&quot; class=&quot;headerlink&quot; title=&quot;2、uname -a&quot;&gt;&lt;/a&gt;2、uname -a&lt;/h2&gt;&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;4&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;5&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;$ uname &lt;span class=&quot;_&quot;&gt;-a&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;Linux centos 3.10.0-327.el7.x86_64 &lt;span class=&quot;comment&quot;&gt;#1 SMP Thu Nov 19 22:10:57 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;➜  ~ uname &lt;span class=&quot;_&quot;&gt;-a&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;Linux www 4.4.0-36-generic &lt;span class=&quot;comment&quot;&gt;#55-Ubuntu SMP Thu Aug 11 18:01:55 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux&lt;/span&gt;&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+    
+    </summary>
+    
+      <category term="Linux" scheme="http://ehlxr.me/categories/Linux/"/>
+    
+    
+      <category term="Linux" scheme="http://ehlxr.me/tags/Linux/"/>
+    
+      <category term="Linux版本" scheme="http://ehlxr.me/tags/Linux%E7%89%88%E6%9C%AC/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Test daocloud CI</title>
+    <link href="http://ehlxr.me/2016/11/18/Test-daocloud-CI/"/>
+    <id>http://ehlxr.me/2016/11/18/Test-daocloud-CI/</id>
+    <published>2016-11-18T09:44:35.000Z</published>
+    <updated>2017-01-10T03:26:27.316Z</updated>
+    
+    <content type="html"><![CDATA[<p>Test daocloud CI</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;Test daocloud CI&lt;/p&gt;
+
+    
+    </summary>
+    
+      <category term="持续构建" scheme="http://ehlxr.me/categories/%E6%8C%81%E7%BB%AD%E6%9E%84%E5%BB%BA/"/>
+    
+    
+      <category term="持续构建" scheme="http://ehlxr.me/tags/%E6%8C%81%E7%BB%AD%E6%9E%84%E5%BB%BA/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>[转]Git 版本回滚</title>
+    <link href="http://ehlxr.me/2016/11/07/%E8%BD%AC-Git-%E7%89%88%E6%9C%AC%E5%9B%9E%E6%BB%9A/"/>
+    <id>http://ehlxr.me/2016/11/07/转-Git-版本回滚/</id>
+    <published>2016-11-07T16:53:38.000Z</published>
+    <updated>2017-01-10T03:26:27.317Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>总有一天你会遇到下面的问题：</p>
+<ul>
+<li>改完代码匆忙提交，上线发现有问题，怎么办？赶紧回滚。</li>
+<li>改完代码测试也没有问题，但是上线发现你的修改影响了之前运行正常的代码报错，必须回滚。</li>
+</ul>
+</blockquote>
+<p>这些开发中很常见的问题，所以 <code>git</code> 的取消提交，回退甚至返回上一版本都是特别重要的。大致分为下面 <code>2</code> 种情况：</p>
+<h1 id="一、没有-push"><a href="#一、没有-push" class="headerlink" title="一、没有 push"></a>一、没有 push</h1><p>这种情况发生在你的本地代码仓库，可能你 <code>add</code>，<code>commit</code> 以后发现代码有点问题，准备取消提交，用到下面命令回退到某个版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">git reset [--soft | --mixed | --hard]</div></pre></td></tr></table></figure>
+<a id="more"></a>
+<p>上面常见三种类型</p>
+<h2 id="mixed"><a href="#mixed" class="headerlink" title="mixed"></a>mixed</h2><p>会保留源码，只是将 <code>git commit</code> 和 <code>index</code> 信息回退到了某个版本。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">git <span class="keyword">reset</span> 默认是 <span class="comment">--mixed 模式 </span></div><div class="line">git <span class="keyword">reset</span> <span class="comment">--mixed  等价于  git reset</span></div></pre></td></tr></table></figure>
+<h2 id="soft"><a href="#soft" class="headerlink" title="soft"></a>soft</h2><p>保留源码，只回退到 <code>commit</code> 信息到某个版本。不涉及 <code>index</code> 的回退，如果还需要提交，直接 <code>commit</code> 即可。</p>
+<h2 id="hard"><a href="#hard" class="headerlink" title="hard"></a>hard</h2><p>源码也会回退到某个版本，<code>commit</code> 和 <code>index</code> 都回回退到某个版本。（<strong>注意，这种方式是改变本地代码仓库源码</strong>）</p>
+<h1 id="二、已经-push"><a href="#二、已经-push" class="headerlink" title="二、已经 push"></a>二、已经 push</h1><h2 id="2-1-方法一"><a href="#2-1-方法一" class="headerlink" title="2.1 方法一"></a>2.1 方法一</h2><p>使用 <code>git reset --hard &lt;commit...&gt;</code> 回退本地代码到某个版本。</p>
+<p>使用 <code>git push --force</code> 将本次变更强行推送至服务器（因为你线上的代码没有变，线上 <code>commit</code>，<code>index</code> 都没有变，所以必须使用强制推送）。这样在服务器上的最后一次错误提交也彻底消失了。</p>
+<p><strong>注意：</strong>这样操作比较比较危险，例如：在你的 <code>commit</code> 之后别人又提交了新的 <code>commit</code>，那在你强制推送之后，那位仁兄的 <code>commit</code> 也跟着一起消失了，所以不建议这样操作。</p>
+<h2 id="2-2-方法二"><a href="#2-2-方法二" class="headerlink" title="2.2 方法二"></a>2.2 方法二</h2><p>使用以下命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">git revert &lt;commit-ish&gt;...</div></pre></td></tr></table></figure>
+<p><code>git revert</code> 用于反转提交，用一个新提交来撤销某次提交，执行 <code>revert</code> 命令时要求工作树必须是干净的。</p>
+<p><code>revert</code> 之后你再 <code>git push</code> 既可以把线上的代码更新。（这里不会像 <code>reset</code> 造成冲突的问题）</p>
+<p><code>revert</code> 使用需要先找到你想回滚版本唯一的 <code>commit</code> 标识代码，可以用 <code>git log</code> 或者在 <code>adgit</code> 搭建的 <code>web</code> 环境历史提交记录里查看。</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="symbol">git</span> <span class="keyword">revert </span>c011eb3c20ba6fb38cc94fe5a8dda366a3990c61</div></pre></td></tr></table></figure>
+<p>通常，前几位即可：</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="symbol">git</span> <span class="keyword">revert </span>c011eb3</div></pre></td></tr></table></figure>
+<h1 id="三、revert-与-reset-比较"><a href="#三、revert-与-reset-比较" class="headerlink" title="三、revert 与 reset 比较"></a>三、revert 与 reset 比较</h1><p><code>git revert</code> 是用一次新的 <code>commit</code> 来回滚之前的 <code>commit</code>，<code>git reset</code> 是直接删除指定的 <code>commit</code>。</p>
+<p>看似达到的效果是一样的，其实完全不同。</p>
+<p>3.1 上面我们说的如果你已经 <code>push</code> 到线上代码库， <code>reset</code> 删除指定 <code>commit</code> 以后，你 <code>git push</code> 可能导致一大堆冲突。但是 <code>revert</code> 并不会。</p>
+<p>3.2 如果在日后现有分支和历史分支需要合并的时候，<code>reset</code> 恢复部分的代码依然会出现在历史分支里。但是 <code>revert</code> 方向提交的 <code>commit</code> 并不会出现在历史分支里。</p>
+<p>3.3 <code>reset</code> 是在正常的 <code>commit</code> 历史中，删除了指定的 <code>commit</code>，这时 <code>HEAD</code> 是向后移动了，而 <code>revert</code> 是在正常的 <code>commit</code> 历史中再 <code>commit</code> 一次，只不过是反向提交，他的 <code>HEAD</code> 是一直向前的。</p>
+<hr>
+<p><a href="http://yijiebuyi.com/blog/8f985d539566d0bf3b804df6be4e0c90.html" target="_blank" rel="external">参考文章地址</a></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;总有一天你会遇到下面的问题：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;改完代码匆忙提交，上线发现有问题，怎么办？赶紧回滚。&lt;/li&gt;
+&lt;li&gt;改完代码测试也没有问题，但是上线发现你的修改影响了之前运行正常的代码报错，必须回滚。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;这些开发中很常见的问题，所以 &lt;code&gt;git&lt;/code&gt; 的取消提交，回退甚至返回上一版本都是特别重要的。大致分为下面 &lt;code&gt;2&lt;/code&gt; 种情况：&lt;/p&gt;
+&lt;h1 id=&quot;一、没有-push&quot;&gt;&lt;a href=&quot;#一、没有-push&quot; class=&quot;headerlink&quot; title=&quot;一、没有 push&quot;&gt;&lt;/a&gt;一、没有 push&lt;/h1&gt;&lt;p&gt;这种情况发生在你的本地代码仓库，可能你 &lt;code&gt;add&lt;/code&gt;，&lt;code&gt;commit&lt;/code&gt; 以后发现代码有点问题，准备取消提交，用到下面命令回退到某个版本：&lt;/p&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;git reset [--soft | --mixed | --hard]&lt;/div&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+    
+    </summary>
+    
+      <category term="Git" scheme="http://ehlxr.me/categories/Git/"/>
+    
+    
+      <category term="Git" scheme="http://ehlxr.me/tags/Git/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Docker 学习笔记</title>
+    <link href="http://ehlxr.me/2016/11/03/Docker-%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/"/>
+    <id>http://ehlxr.me/2016/11/03/Docker-学习笔记/</id>
+    <published>2016-11-03T15:46:19.000Z</published>
+    <updated>2017-01-10T03:26:27.317Z</updated>
+    
+    <content type="html"><![CDATA[<p><img src="http://oapjp6spr.bkt.clouddn.com/20161103001.png" alt="Docker"></p>
+<h1 id="一、CentOS-系统安装"><a href="#一、CentOS-系统安装" class="headerlink" title="一、CentOS 系统安装"></a>一、CentOS 系统安装</h1><p>参考《Docker — 从入门到实践》 之 <a href="https://github.com/yeasy/docker_practice/blob/master/install/centos.md" target="_blank" rel="external">“CentOS 操作系统安装 Docker”</a></p>
+<h2 id="1-1-系统要求"><a href="#1-1-系统要求" class="headerlink" title="1.1 系统要求"></a>1.1 系统要求</h2><p>Docker 最低支持 CentOS 7。</p>
+<p>Docker 需要安装在 64 位的平台，并且内核版本不低于 3.10。 CentOS 7 满足最低内核的要求，但由于内核版本比较低，部分功能（如 <code>overlay2</code> 存储层驱动）无法使用，并且部分功能可能不太稳定。</p>
+<p>参考升级<a href="http://ehlxr.me/2017/01/10/%E8%BD%AC-CentOS-%E5%8D%87%E7%BA%A7-kernel/">CentOS 升级 kernel</a></p>
+<h2 id="1-2-使用脚本自动安装"><a href="#1-2-使用脚本自动安装" class="headerlink" title="1.2 使用脚本自动安装"></a>1.2 使用脚本自动安装</h2><p>Docker 官方为了简化安装流程，提供了一套安装脚本，CentOS 系统上可以使用这套脚本安装：<br><a id="more"></a><br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl <span class="_">-s</span>SL https://get.docker.com/ | sh</div></pre></td></tr></table></figure></p>
+<p>执行这个命令后，脚本就会自动的将一切准备工作做好，并且把 Docker 安装在系统中。</p>
+<p>不过，由于伟大的墙的原因，在国内使用这个脚本可能会出现某些下载出现错误的情况。国内的一些云服务商提供了这个脚本的修改版本，使其使用国内的 Docker 软件源镜像安装，这样就避免了墙的干扰。</p>
+<h3 id="1-2-1-阿里云的安装脚本"><a href="#1-2-1-阿里云的安装脚本" class="headerlink" title="1.2.1 阿里云的安装脚本"></a>1.2.1 阿里云的安装脚本</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl <span class="_">-s</span>SL http://acs-public-mirror.oss-cn-hangzhou.aliyuncs.com/docker-engine/internet | sh -</div></pre></td></tr></table></figure>
+<h3 id="1-2-2-DaoCloud-的安装脚本"><a href="#1-2-2-DaoCloud-的安装脚本" class="headerlink" title="1.2.2 DaoCloud 的安装脚本"></a>1.2.2 DaoCloud 的安装脚本</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl <span class="_">-s</span>SL https://get.daocloud.io/docker | sh</div></pre></td></tr></table></figure>
+<h2 id="1-3-手动安装"><a href="#1-3-手动安装" class="headerlink" title="1.3 手动安装"></a>1.3 手动安装</h2><h3 id="1-3-1-添加内核参数"><a href="#1-3-1-添加内核参数" class="headerlink" title="1.3.1 添加内核参数"></a>1.3.1 添加内核参数</h3><p>默认配置下，在 CentOS 使用 Docker 可能会碰到下面的这些警告信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">WARNING: bridge-nf-call-iptables is disabled</div><div class="line">WARNING: bridge-nf-call-ip6tables is disabled</div></pre></td></tr></table></figure>
+<p>添加内核配置参数以启用这些功能。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sudo tee <span class="_">-a</span> /etc/sysctl.conf &lt;&lt;-EOF</div><div class="line">net.bridge.bridge-nf-call-ip6tables = 1</div><div class="line">net.bridge.bridge-nf-call-iptables = 1</div><div class="line">EOF</div></pre></td></tr></table></figure>
+<p>然后重新加载 <code>sysctl.conf</code> 即可</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo sysctl -p</div></pre></td></tr></table></figure>
+<h3 id="1-3-2-添加-yum-源"><a href="#1-3-2-添加-yum-源" class="headerlink" title="1.3.2 添加 yum 源"></a>1.3.2 添加 yum 源</h3><p>虽然 CentOS 软件源 <code>Extras</code> 中有 Docker，名为 <code>docker</code>，但是不建议使用系统源中的这个版本，它的版本相对比较陈旧，而且并非 Docker 官方维护的版本。因此，我们需要使用 Docker 官方提供的 CentOS 软件源。</p>
+<p>执行下面的命令添加 <code>yum</code> 软件源。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ sudo tee /etc/yum.repos.d/docker.repo &lt;&lt;-<span class="string">'EOF'</span></div><div class="line">[dockerrepo]</div><div class="line">name=Docker Repository</div><div class="line">baseurl=https://yum.dockerproject.org/repo/main/centos/7/</div><div class="line">enabled=1</div><div class="line">gpgcheck=1</div><div class="line">gpgkey=https://yum.dockerproject.org/gpg</div><div class="line">EOF</div></pre></td></tr></table></figure>
+<h3 id="1-3-3-安装-Docker"><a href="#1-3-3-安装-Docker" class="headerlink" title="1.3.3 安装 Docker"></a>1.3.3 安装 Docker</h3><p>更新 <code>yum</code> 软件源缓存，并安装 <code>docker-engine</code>。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ sudo yum update</div><div class="line">$ sudo yum install docker-engine</div></pre></td></tr></table></figure>
+<h3 id="1-3-4-启动-Docker-引擎"><a href="#1-3-4-启动-Docker-引擎" class="headerlink" title="1.3.4 启动 Docker 引擎"></a>1.3.4 启动 Docker 引擎</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ sudo systemctl <span class="built_in">enable</span> docker</div><div class="line">$ sudo systemctl start docker</div></pre></td></tr></table></figure>
+<h3 id="1-3-5-建立-docker-用户组"><a href="#1-3-5-建立-docker-用户组" class="headerlink" title="1.3.5 建立 docker 用户组"></a>1.3.5 建立 docker 用户组</h3><p>默认情况下，<code>docker</code> 命令会使用 <a href="https://en.wikipedia.org/wiki/Unix_domain_socket" target="_blank" rel="external">Unix socket</a> 与 Docker 引擎通讯。而只有 <code>root</code> 用户和 <code>docker</code> 组的用户才可以访问 Docker 引擎的 Unix socket。出于安全考虑，一般 Linux 系统上不会直接使用 <code>root</code> 用户。因此，更好地做法是将需要使用 <code>docker</code> 的用户加入 <code>docker</code> 用户组。</p>
+<p>建立 <code>docker</code> 组：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo groupadd docker</div></pre></td></tr></table></figure>
+<p>将当前用户加入 <code>docker</code> 组：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo usermod <span class="_">-a</span>G docker <span class="variable">$USER</span></div></pre></td></tr></table></figure>
+<h2 id="1-4-参考文档"><a href="#1-4-参考文档" class="headerlink" title="1.4 参考文档"></a>1.4 参考文档</h2><p>参见 <a href="https://docs.docker.com/engine/installation/linux/centos/" target="_blank" rel="external">Docker 官方 CentOS 安装文档</a>。</p>
+<h1 id="二、基本概念"><a href="#二、基本概念" class="headerlink" title="二、基本概念"></a>二、基本概念</h1><h2 id="2-1-Docker-images"><a href="#2-1-Docker-images" class="headerlink" title="2.1 Docker images"></a>2.1 Docker images</h2><p>Docker image 是一个只读类型的模板。比如一个镜像可以是一个包含 apache 和你的 web 应用的 ubuntu 操作系统。我们经常使用镜像来创建容器。Docker 提供了一种快捷的方式来构建新镜像或者更新镜像，同时你也可以下载其他人已经创建好的镜像。Docker image 是 Docker 结构中的构建组件。</p>
+<h2 id="2-2-Docker-Registries"><a href="#2-2-Docker-Registries" class="headerlink" title="2.2 Docker Registries"></a>2.2 Docker Registries</h2><p>Docker registries 用来保存镜像。它分为公开仓库和私有仓库，你可以从仓库中上传或者下载镜像。公开的 Docker 仓库称之为 <a href="https://hub.docker.com/" target="_blank" rel="external">Docker Hub</a>。它提供了你可以使用的非常多的镜像。你可以自由的创建镜像或者使用这里面其他人已经创建好的镜像。Docker registries 属于 Docker 中的分发组件。</p>
+<h2 id="2-3-Docker-containers"><a href="#2-3-Docker-containers" class="headerlink" title="2.3 Docker containers"></a>2.3 Docker containers</h2><p>Docker containers 同目录有几分相似。Docker containers 保存了执行应用所需的所有资源。每一个 Docker containers 都是由 image 创建的。Docker containers 可以 run, start, stop, restart, rm。需要注意的是，Docker containers 之间是隔离的。Docker containers 属于 Docker 中的执行组件。</p>
+<h1 id="三、常用命令"><a href="#三、常用命令" class="headerlink" title="三、常用命令"></a>三、常用命令</h1><h2 id="3-1-镜像操作"><a href="#3-1-镜像操作" class="headerlink" title="3.1 镜像操作"></a>3.1 镜像操作</h2><ul>
+<li>拉取镜像：<code>docker pull nginx:latest</code></li>
+<li>查看容器列表：<code>docker images</code></li>
+<li>删除容器：<code>docker rmi &lt;image id&gt;</code></li>
+<li>想要删除 untagged images（也就是那些 id 为 None 的容器）：<code>docker rmi $(docker images | grep &quot;^&lt;none&gt;&quot; | awk &quot;{print $3}&quot;)</code></li>
+<li>删除全部容器：<code>docker rmi $(docker images -q)</code></li>
+</ul>
+<h2 id="3-2-创建容器"><a href="#3-2-创建容器" class="headerlink" title="3.2 创建容器"></a>3.2 创建容器</h2><p>创建一个容器并运行，例如：</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker run --name blog --privileged=true -v /home/Hexo/public:/usr/share/nginx/<span class="selector-tag">html</span>:ro -d -<span class="selector-tag">p</span> <span class="number">80</span>:<span class="number">80</span> docker.io/nginx</div></pre></td></tr></table></figure>
+<ul>
+<li><code>--name</code>：容器名称</li>
+<li><code>--privileged=true</code>：设置权限</li>
+<li><code>-v</code>：挂载本地磁盘目录，格式为本地磁盘绝对路径:容器路径<blockquote>
+<p>保证删除容器后，数据不被删除</p>
+</blockquote>
+</li>
+<li><code>:ro</code>：只读</li>
+<li><code>-d</code>：后台模式</li>
+<li><code>i</code>：交互式操作</li>
+<li><code>t</code>：终端</li>
+<li><code>-p</code>：设置宿主计算机和容器端口映射</li>
+</ul>
+<blockquote>
+<p>在Dockerfile 中有一条指令是 EXPOSE 22，如果使用 <code>-P</code>，宿主机会随机选择一个 <code>没有被使用的端口</code> 和 docker <code>容器的 22 端口</code> 做 <code>端口映射</code>，如果 docker 主机或者容器重启后，宿主机又会随机选择一个没有被使用的端口和 docker 容器的 22 端口做端口映射，这样端口会发生 <code>变化</code></p>
+<p>如果使用 <code>-p</code>，比如 <code>2222:22</code>，这样不管是 docker 主机或者容器重启后，2222:22 端口都是这样来映射，<code>不会发生改变</code></p>
+</blockquote>
+<h2 id="3-3-容器操作"><a href="#3-3-容器操作" class="headerlink" title="3.3 容器操作"></a>3.3 容器操作</h2><ul>
+<li>启动：<code>docker start blog</code></li>
+<li>停止：<code>docker stop blog</code>；停止所有容器：<code>docker stop $(docker ps -a -q)</code></li>
+<li>删除：<code>docker rm blog</code>；删除所有容器：<code>docker rm $(docker ps -a -q)</code></li>
+<li>查看：<code>docker ps -a</code>（查看所有容器，包括已启动的和未启动的）</li>
+</ul>
+<h2 id="3-3-进入容器"><a href="#3-3-进入容器" class="headerlink" title="3.3 进入容器"></a>3.3 进入容器</h2><figure class="highlight mel"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo docker <span class="keyword">exec</span> -it blog /bin/bash</div></pre></td></tr></table></figure>
+<h1 id="四、Docker-私有仓库"><a href="#四、Docker-私有仓库" class="headerlink" title="四、Docker 私有仓库"></a>四、Docker 私有仓库</h1><p>Docker 提供了一个中央仓库，同时也允许我们使用 registry 搭建本地私有仓库。</p>
+<h2 id="4-1-搭建-Docker-私有仓库"><a href="#4-1-搭建-Docker-私有仓库" class="headerlink" title="4.1 搭建 Docker 私有仓库"></a>4.1 搭建 Docker 私有仓库</h2><p>首先拉取 registry 镜像</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker pull registry</div></pre></td></tr></table></figure>
+<p>创建 register 容器并运行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker run --name registry <span class="_">-d</span> -p 5000:5000 --privileged=<span class="literal">true</span> -v /opt/registry:/var/lib/registry/ registry</div></pre></td></tr></table></figure>
+<p>挂载容器中存放镜像的目录到本地 <code>/opt/registry</code>，需要注意的一点是，容器中存放镜像的目录 registry 官方镜像示例中使用的是 <code>/tmp/registry-dev</code> ，但实验证明在版本 <code>2.5.0</code> 中，目录是 <code>/var/lib/registry/</code>。</p>
+<p>CentOS 系统挂载目录需要加上 <code>--privileged=true</code> 解决挂载的目录没有权限的问题。</p>
+<p>打开浏览器输入 register 容器宿主计算机地址加端口（如：<a href="http://192.168.237.128:5000/v2/" target="_blank" rel="external">http://192.168.237.128:5000/v2/</a> ），如果出现 <code>{}</code>，即表明 register 容器运行成功。</p>
+<h2 id="4-2-测试使用私有仓库"><a href="#4-2-测试使用私有仓库" class="headerlink" title="4.2 测试使用私有仓库"></a>4.2 测试使用私有仓库</h2><p>首先给需要 push 到仓库的 images 打 TAG，前面需要带上私有仓库的地址。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ docker tag docker.io/registry:latest 192.168.237.128:5000/registry:2.5.0</div></pre></td></tr></table></figure>
+<p>push 到私有仓库</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ docker push 192.168.237.128:5000/registry:2.5.0</div></pre></td></tr></table></figure>
+<p>通过以下命令删除镜像 <code>192.168.237.128:5000/registry:2.5.0</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ docker rmi 192.168.237.128:5000/registry:2.5.0</div></pre></td></tr></table></figure>
+<p>然后通过以下命令即可拉取私有仓库的镜像：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ docker pull 192.168.237.128:5000/hexo:latest</div></pre></td></tr></table></figure>
+<p>如果 docker push 的时候出现以下错误信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ docker push 192.168.237.128:5000/registry:2.5.0</div><div class="line">The push refers to a repository [192.168.237.128:5000/registry]</div><div class="line">unable to ping registry endpoint https://192.168.237.128:5000/v0/</div><div class="line">v2 ping attempt failed with error: Get https://192.168.237.128:5000/v2/: http: server gave HTTP response to HTTPS client</div><div class="line"> v1 ping attempt failed with error: Get https://192.168.237.128:5000/v1/_ping: http: server gave HTTP response to HTTPS client</div></pre></td></tr></table></figure>
+<p>修改文件 <code>/etc/sysconfig/docker</code> 添加以下代码，然后重启 docker 服务即可重新 push。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ADD_REGISTRY=<span class="string">'--add-registry 192.168.237.128:5000'</span></div><div class="line"></div><div class="line">INSECURE_REGISTRY=<span class="string">'--insecure-registry 192.168.237.128:5000'</span></div></pre></td></tr></table></figure>
+<h1 id="五、Dockerfile"><a href="#五、Dockerfile" class="headerlink" title="五、Dockerfile"></a>五、Dockerfile</h1><h2 id="5-1-什么是Dockerfile？"><a href="#5-1-什么是Dockerfile？" class="headerlink" title="5.1 什么是Dockerfile？"></a>5.1 什么是Dockerfile？</h2><blockquote>
+<p>Dockerfile 是自动构建 docker 镜像的配置文件，Dockerfile 中的命令非常类似 linux shell 下的命令<br>Dockerfile，可以让用户自定义构建 docker 镜像，支持以 # 开头的注释行</p>
+</blockquote>
+<p>一般，Dockerfile分为4部分</p>
+<ul>
+<li>基础镜像（父镜像）信息</li>
+<li>维护者信息</li>
+<li>镜像操作命令</li>
+<li>容器启动命令</li>
+</ul>
+<h2 id="5-2-Dockerfile-介绍"><a href="#5-2-Dockerfile-介绍" class="headerlink" title="5.2 Dockerfile 介绍"></a>5.2 Dockerfile 介绍</h2><p><code>FROM       centos:centos7.1.1503</code></p>
+<blockquote>
+<p>基于 <strong>父镜像</strong> 构建其他 docker 镜像，<em>父镜像</em>：可以通过 docker pull 命令获得，也可以自己制作</p>
+</blockquote>
+<p><code>MAINTAINER Carson,C.J.Zeong &lt;zcy@nicescale.com&gt;</code></p>
+<blockquote>
+<p>Dockerfile 维护者</p>
+</blockquote>
+<p><code>ENV TZ &quot;Asia/Shanghai&quot;</code></p>
+<blockquote>
+<p>ENV（environment）设置环境变量，一个 Dockerfile 中可以写多个。以上例子是：设置 docker 容器的时区为 Shanghai</p>
+</blockquote>
+<p><strong>Dockerfile 中有 2 条指令可以拷贝文件</strong></p>
+<p><code>ADD aliyun-mirror.repo /etc/yum.repos.d/CentOS-Base.repo</code></p>
+<blockquote>
+<p>拷贝本地文件到 docker 容器里，还可以拷贝 URL 链接地址下的文件，ADD 还具有解压软件包的功能（支持 gzip, bzip2 or xz）</p>
+</blockquote>
+<p><code>COPY test /mydir</code></p>
+<blockquote>
+<p>拷贝本地文件到 docker 容器</p>
+</blockquote>
+<p><code>RUN yum install -y curl wget....</code></p>
+<blockquote>
+<p>RUN 命令，非常类似 Linux 下的 shell 命令 <code>(the command is run in a shell - /bin/sh -c - shell form)</code><br>在 Dockerfile 中每执行一条指令（ENV、ADD、RUN等命令），都会生成一个 docker image layer</p>
+</blockquote>
+<p><code>ADD supervisord.conf /etc/supervisord.conf</code></p>
+<blockquote>
+<p>添加 supervisor 的主配置文件，到 docker 容器里</p>
+</blockquote>
+<p><code>EXPOSE 22</code></p>
+<blockquote>
+<p>端口映射 <code>EXPOSE &lt;host_port&gt;:&lt;container_port&gt;</code><br>推荐使用 <code>docker run -p &lt;host_port&gt;:&lt;container_port&gt;</code> 来固化端口</p>
+</blockquote>
+<p><code>ENTRYPOINT [&quot;/usr/bin/supervisord&quot;, &quot;-n&quot;, &quot;-c&quot;, &quot;/etc/supervisord.conf&quot;]</code></p>
+<blockquote>
+<p>一个 Dockerfile 中只有最后一条 <code>ENTRYPOINT</code> 生效，并且每次启动 docker 容器，都会执行 <code>ENTRYPOINT</code></p>
+</blockquote>
+<p><code>ONBUILD ADD . /app</code></p>
+<blockquote>
+<p><code>ONBUILD</code> 在生成当前docker镜像的时候不生效，在子镜像生效；<code>ONBUILD</code>在产品发布时起着非常重要的作用！举例<br>A镜像中有<code>ONBUILD</code>指令，在构建A镜像时<code>ONBUILD</code>指令不执行；B镜像<code>FROM A</code>,在构建B镜像时<code>ONBUILD</code>指令开始执行；</p>
+</blockquote>
+<p><code>VOLUME [&quot;/var/lib/mysql&quot;]</code></p>
+<blockquote>
+<p>指定 docker 容器和宿主机做映射的文件目录</p>
+</blockquote>
+<h2 id="5-3-生成-docker-镜像"><a href="#5-3-生成-docker-镜像" class="headerlink" title="5.3 生成 docker 镜像"></a>5.3 生成 docker 镜像</h2><p>以上文件就是用来生成第一个 docker 镜像的 Dockerfile，通过 <code>docker build</code> 指令来生成 docker 镜像</p>
+<p><code>docker build -t csphere/centos:7.1 .</code></p>
+<blockquote>
+<p>如果 Dockerfile 在当前目录下，输入点 <code>.</code> 就可以进行加载当前目录下的 <code>Dockerfile</code><br>如果不在当前目录下需要运行 <code>docker build -t csphere/centos:7.1 &lt;Dockerfile_dir&gt;</code> 加载相对路径下的 <code>Dockerfile</code></p>
+</blockquote>
+<p>docker 镜像的命名规则 <code>registry_url/namespace/image_name:tag</code> 默认 <code>tag</code> 是 <code>latest</code></p>
+<blockquote>
+<p>在构建 Docker 镜像时，如果有自己内部的 yum 源，替换成自己内部的 yum 地址，可以加快构建速度。<br>如果第一次构建失败，会有部分镜像 layer 生成，第二次构建会基于第一次构建所生成的 layer（use cache），继续构建</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">Step 10 : EXPOSE 22</div><div class="line"> ---&gt; Running <span class="keyword">in</span> 0ed1c5479ebc</div><div class="line"> ---&gt; c57a5bac41c8</div><div class="line">Removing intermediate container 0ed1c5479ebc</div><div class="line">Step 11 : ENTRYPOINT /usr/bin/supervisord -n -c /etc/supervisord.conf</div><div class="line"> ---&gt; Running <span class="keyword">in</span> e16c7ac2fd45</div><div class="line"> ---&gt; 185ef7b101a8</div><div class="line">Removing intermediate container e16c7ac2fd45</div><div class="line">Successfully built 185ef7b101a8</div></pre></td></tr></table></figure>
+<p>可以看到每执行一条 <code>Dockerfile</code> 的指令都会生成一个镜像的 layer <code>c57a5bac41c8</code> <code>185ef7b101a8</code> 最后 <code>185ef7b101a8</code> 这个是 docker 镜像的ID，<code>185ef7b101a8</code> 是由 <code>c57a5bac41c8</code> <code>185ef7b101a8</code>…layers 叠加而成，体现了 docker 镜像是分层的</p>
+<hr>
+<div style="color: #f00;">未完待续…</div>
+
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;&lt;img src=&quot;http://oapjp6spr.bkt.clouddn.com/20161103001.png&quot; alt=&quot;Docker&quot;&gt;&lt;/p&gt;
+&lt;h1 id=&quot;一、CentOS-系统安装&quot;&gt;&lt;a href=&quot;#一、CentOS-系统安装&quot; class=&quot;headerlink&quot; title=&quot;一、CentOS 系统安装&quot;&gt;&lt;/a&gt;一、CentOS 系统安装&lt;/h1&gt;&lt;p&gt;参考《Docker — 从入门到实践》 之 &lt;a href=&quot;https://github.com/yeasy/docker_practice/blob/master/install/centos.md&quot;&gt;“CentOS 操作系统安装 Docker”&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&quot;1-1-系统要求&quot;&gt;&lt;a href=&quot;#1-1-系统要求&quot; class=&quot;headerlink&quot; title=&quot;1.1 系统要求&quot;&gt;&lt;/a&gt;1.1 系统要求&lt;/h2&gt;&lt;p&gt;Docker 最低支持 CentOS 7。&lt;/p&gt;
+&lt;p&gt;Docker 需要安装在 64 位的平台，并且内核版本不低于 3.10。 CentOS 7 满足最低内核的要求，但由于内核版本比较低，部分功能（如 &lt;code&gt;overlay2&lt;/code&gt; 存储层驱动）无法使用，并且部分功能可能不太稳定。&lt;/p&gt;
+&lt;p&gt;参考升级&lt;a href=&quot;http://ehlxr.me/2017/01/10/%E8%BD%AC-CentOS-%E5%8D%87%E7%BA%A7-kernel/&quot;&gt;CentOS 升级 kernel&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&quot;1-2-使用脚本自动安装&quot;&gt;&lt;a href=&quot;#1-2-使用脚本自动安装&quot; class=&quot;headerlink&quot; title=&quot;1.2 使用脚本自动安装&quot;&gt;&lt;/a&gt;1.2 使用脚本自动安装&lt;/h2&gt;&lt;p&gt;Docker 官方为了简化安装流程，提供了一套安装脚本，CentOS 系统上可以使用这套脚本安装：&lt;br&gt;
+    
+    </summary>
+    
+      <category term="Docker" scheme="http://ehlxr.me/categories/Docker/"/>
+    
+    
+      <category term="Docker" scheme="http://ehlxr.me/tags/Docker/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>测试使用 daocloud 持续构建 Hexo</title>
+    <link href="http://ehlxr.me/2016/11/02/%E6%B5%8B%E8%AF%95%E4%BD%BF%E7%94%A8-daocloud-%E6%8C%81%E7%BB%AD%E6%9E%84%E5%BB%BA-Hexo/"/>
+    <id>http://ehlxr.me/2016/11/02/测试使用-daocloud-持续构建-Hexo/</id>
+    <published>2016-11-02T19:03:06.000Z</published>
+    <updated>2017-01-10T03:26:27.316Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="测试使用-daocloud-持续构建-Hexo"><a href="#测试使用-daocloud-持续构建-Hexo" class="headerlink" title="测试使用 daocloud 持续构建 Hexo"></a>测试使用 daocloud 持续构建 Hexo</h1><div class="note danger"><p>Coding Hexo DaoCloud </p>
+</div>
+<div class="note primary"><p>看到这边博文，表示持续构建成功！！！ </p>
+</div>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;测试使用-daocloud-持续构建-Hexo&quot;&gt;&lt;a href=&quot;#测试使用-daocloud-持续构建-Hexo&quot; class=&quot;headerlink&quot; title=&quot;测试使用 daocloud 持续构建 Hexo&quot;&gt;&lt;/a&gt;测试使用 daocloud 持续构
+    
+    </summary>
+    
+      <category term="持续构建" scheme="http://ehlxr.me/categories/%E6%8C%81%E7%BB%AD%E6%9E%84%E5%BB%BA/"/>
+    
+    
+      <category term="持续构建" scheme="http://ehlxr.me/tags/%E6%8C%81%E7%BB%AD%E6%9E%84%E5%BB%BA/"/>
+    
+      <category term="Daocloud" scheme="http://ehlxr.me/tags/Daocloud/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>测试 Travis CI 结合 Hexo 使用</title>
+    <link href="http://ehlxr.me/2016/11/02/%E6%B5%8B%E8%AF%95-Travis-CI-%E7%BB%93%E5%90%88-Hexo-%E4%BD%BF%E7%94%A8/"/>
+    <id>http://ehlxr.me/2016/11/02/测试-Travis-CI-结合-Hexo-使用/</id>
+    <published>2016-11-02T17:32:35.000Z</published>
+    <updated>2017-01-10T03:26:27.317Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="测试-Travis-CI-结合-Hexo-使用"><a href="#测试-Travis-CI-结合-Hexo-使用" class="headerlink" title="测试 Travis CI 结合 Hexo 使用"></a>测试 Travis CI 结合 Hexo 使用</h1>]]></content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;测试-Travis-CI-结合-Hexo-使用&quot;&gt;&lt;a href=&quot;#测试-Travis-CI-结合-Hexo-使用&quot; class=&quot;headerlink&quot; title=&quot;测试 Travis CI 结合 Hexo 使用&quot;&gt;&lt;/a&gt;测试 Travis CI 结合 H
+    
+    </summary>
+    
+      <category term="持续构建" scheme="http://ehlxr.me/categories/%E6%8C%81%E7%BB%AD%E6%9E%84%E5%BB%BA/"/>
+    
+    
+      <category term="持续构建" scheme="http://ehlxr.me/tags/%E6%8C%81%E7%BB%AD%E6%9E%84%E5%BB%BA/"/>
+    
+      <category term="Travis CI" scheme="http://ehlxr.me/tags/Travis-CI/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>热爱微小的改变</title>
+    <link href="http://ehlxr.me/2016/10/31/%E7%83%AD%E7%88%B1%E5%BE%AE%E5%B0%8F%E7%9A%84%E6%94%B9%E5%8F%98/"/>
+    <id>http://ehlxr.me/2016/10/31/热爱微小的改变/</id>
+    <published>2016-10-31T17:05:37.000Z</published>
+    <updated>2017-01-10T03:26:27.317Z</updated>
+    
+    <content type="html"><![CDATA[<p><img src="http://oapjp6spr.bkt.clouddn.com/20161031001.jpg" alt=""><br>当你有着强烈的情绪时，可能是因为你要明哲保身。你不愿冒险因为你害怕被拒绝、害怕失败、害怕自己hold不住。真的，试想下如果你彻底的失败了，甚至在完全陌生的人面前流泪你会怎么做？也许你不相信你会采取合理的风险。也许你曾经打破常规去挑战自我的极限，但是结果却并不令你满意。但卖掉你所有的财产，搬去墨西哥并非我今天所谈论的改变类型。</p>
+<a id="more"></a>
+<p>也许你会害怕改变，虽然你也不知道其中的原因。一想到沉溺于同样的地方遇见同样的人，遵循例行的生活是一种最不愉快的体验。</p>
+<p>的确如此，你每天在同一时间起床之后重复同样的行为。你吃着一成不变的食物去同一家电影院。你约会同样的朋友甚至在每周同一时间。很多情况下常规和结构化的模式有助于情绪管理。虽然可预测性是你行为方式的一部分，但如果这部分所占比例太高，则会挤压你生活中的乐趣。</p>
+<p>探索新体验是增加幸福感的方式之一。新体验并不需要太大的改变。或许你可以探索下你所在城市的自己不熟悉的地方，品尝些新食物，做一道新菜，阅读一些你平时并非爱好的杂志，或者去参加一些你从未体验过的活动。你也可以走进一家专卖亚洲食品的商店，或者到公园里参加一些游戏活动。新体验能够培养兴趣或者参与甚至取代你之前熟知的意识。当在熟知的范围内发生适当的改变，会刺激你的活力和幸福感。你看孩子们始终拥有对世界的好奇心和迷恋感，因为对于他们来说什么都是新的。所以当你寻求新体验的时候你也能保持一份好奇感。</p>
+<p>当你想做一些全新的不同的事情时候，通常会面临已有的惯性思维。你给自己各种借口待在房子里，重复自己昨天甚至前天同样的事情。你告诉自己学习新东西太麻烦了，或者你根本就不喜欢轮滑，那么还为什么要熬夜到很晚，甚至失去自己呼呼大睡的机会呢？这种消极的心理暗示总是非常具有说服力，你会认为你年纪太大没必要再去学习骑骆驼，或者如果你已经在博物馆工作那么你可能接下来的一辈子都会留在这里。</p>
+<p>从事新活动是你可以学习的行为。给自己创造一些新体验。如果有朋友愿意和你一起，这将是非常有帮助的。刚开始你可能会觉得不舒服但是一定要坚持下去。直到在这个水平内你感到习惯然后再继续往下走。把你想做的事情列一个清单，保证一周一次并坚持四个月。有时你会厌烦这很正常，所以一定要坚持下去。培养兴趣和保持活力是非常值得做的事情。</p>
+<p>译者：小太阳123<br>作者：KARYN HALL,PHD</p>
+<hr>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;&lt;img src=&quot;http://oapjp6spr.bkt.clouddn.com/20161031001.jpg&quot; alt=&quot;&quot;&gt;&lt;br&gt;当你有着强烈的情绪时，可能是因为你要明哲保身。你不愿冒险因为你害怕被拒绝、害怕失败、害怕自己hold不住。真的，试想下如果你彻底的失败了，甚至在完全陌生的人面前流泪你会怎么做？也许你不相信你会采取合理的风险。也许你曾经打破常规去挑战自我的极限，但是结果却并不令你满意。但卖掉你所有的财产，搬去墨西哥并非我今天所谈论的改变类型。&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="杂谈" scheme="http://ehlxr.me/categories/%E6%9D%82%E8%B0%88/"/>
+    
+    
+      <category term="杂谈" scheme="http://ehlxr.me/tags/%E6%9D%82%E8%B0%88/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>看懂的人都还在加班中...</title>
+    <link href="http://ehlxr.me/2016/10/27/%E7%9C%8B%E6%87%82%E7%9A%84%E4%BA%BA%E9%83%BD%E8%BF%98%E5%9C%A8%E5%8A%A0%E7%8F%AD%E4%B8%AD/"/>
+    <id>http://ehlxr.me/2016/10/27/看懂的人都还在加班中/</id>
+    <published>2016-10-27T15:06:38.000Z</published>
+    <updated>2017-01-10T03:26:27.317Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>以下是关于程序员的一些笑话，据说看懂的人都还在加班中。</p>
+</blockquote>
+<p>0、老婆给当程序员的老公打电话：下班顺路买十个包子，如果看到卖西瓜的，买一个。当晚老公手捧一个包子进了家门。老婆怒道：你怎么只买一个包子？！老公甚恐，喃喃道：因为我真看到卖西瓜的了。</p>
+<p>1、一程序员去面试，面试官问：“你毕业才两年，这三年工作经验是怎么来的？！”程序员答：“加班。”</p>
+<p>2、某程序员对书法十分感兴趣，退休后决定在这方面有所建树。于是花重金购买了上等的文房四宝。一日，饭后突生雅兴，一番磨墨拟纸，并点上了上好的檀香，颇有王羲之风范，又具颜真卿气势，定神片刻，泼墨挥毫，郑重地写下一行字：<code>hello world</code>。</p>
+<p>3、问：程序员最讨厌康熙的哪个儿子。答：胤禩。因为他是八阿哥（<code>bug</code>）<br><a id="more"></a></p>
+<p>4、程序猿要了3个孩子，分别取名叫<code>Ctrl</code>、<code>Alt</code> 和 <code>Delete</code>，如果他们不听话，程序猿就只要同时敲他们一下就会好的。</p>
+<p>5、今天在公司听到一句惨绝人寰骂人的话：“你 <code>TM</code> 就是一个没有对象的野指针！”</p>
+<p>6、程xx遭遇车祸成植物人，医生说她活下来的希望只有万分之一，唤醒更为渺茫。她的同事和亲人没放弃，并根据程xx对 <code>testing</code> 痴迷的作风，每天都在她身边念：“你测的模块上线后回滚了。”奇迹发生了，程xx醒来第一句话：确认那模块是我测的？</p>
+<p>7、一个程序员在海滨游泳时溺水身亡。他死前拼命的呼救，当时海滩上有许多救生员，但是没有人救他。因为他一直大喊“<code>F1!</code>”“<code>F1!</code>”，谁都不知道“<code>F1</code>”究竟是什么意思。</p>
+<p>8、世界上最远的距离，是我在 <code>if</code> 里你在 <code>else</code> 里，虽然经常一起出现，但却永不结伴执行。</p>
+<p>9、正在码代码 <code>ing</code>，医院回来的同事一脸的苦逼样子，问他怎么了？他回答：得了类风湿性关节炎了，我怕会遗传给下一代啊。我一脸的问号：谁说类风湿性关节炎能遗传的？丫一脸诧异：类不是继承的吗？</p>
+<p>10、我很奇怪客栈这个词，难道后入住的必须先退房吗？</p>
+<p>11、话说，决定一个程序员跳槽与否的关键因素是他前同事的现工资。</p>
+<p>12、程序员最憋屈的事情就是：你辛辛苦苦熬夜写了一个风格优雅的源文件，被一个代码风格极差的同事改了且没署名，以至于别人都以为你是写的。</p>
+<p>13、前端工程师说，我去交友网站找女朋友去了。朋友问，找到了么？工程师说，找到了他们页面的一个 bug`。</p>
+<p>14、<code>C</code> 程序看不起 <code>C++</code> 程序员， <code>C++</code> 程序员看不起 <code>Java</code> 程序员， <code>Java</code> 程序员看不起 <code>C#</code> 程序员，<code>C#</code> 程序员看不起美工，周末了，美工带着妹子出去约会了，一群程序员还在加班！</p>
+<p>15、据说一老外年轻的时候，立志要当一名伟大的作家。怎么才算伟大呢？他说：我写的东西全世界都要看到！看完他们必定会歇斯底里！会火冒三丈！会痛苦万分！结果，他成功了，他在微软公司负责写系统蓝屏时的报错提示信息。</p>
+<p>16、程序员应聘必备词汇：了解＝听过名字；熟悉＝知道是啥；熟练＝用过；精通＝做过东西。</p>
+<p>17、两程序员聊天，程序员甲抱怨：“做程序员太辛苦了，我想换行……我该怎么办？”程序员乙：“敲一下回车。”</p>
+<p>18、程序员最讨厌的四件事：写注释、写文档、别人不写注释、别人不写文档……</p>
+<p>19、假如生活欺骗了你，找 <code>50</code> 个程序员问问为什么编程；假如生活让你想死，找 <code>50</code> 个程序员问问 <code>Bug</code> 改完了没有；假如你觉得生活拮据，找 <code>50</code> 个程序员问问工资涨了没有；假如你觉得活着无聊，找 <code>50</code> 个程序员问问他们一天都干了什么！</p>
+<p>20、男人要记住，与女人吵架的要领是，要像在安装软件或注册网站时阅读 <code>服务条款</code> 那样，直接忽略所有的内容，到最后面勾选 <code>我同意</code>，然后点击 <code>确定</code>。</p>
+<p>21、朋友今天遇到的真事：客户说我们设备卡，死活找不到原因，工程师赶到现场，给客户换了个鼠标垫，故障排除……</p>
+<p>22、产品经理：“你明白吧，这里向右划可以出菜单，然后需要一个闪烁的动画，还有，我想这个tab可以拉下来，你懂吧？ 设计师：“别废话，把你要抄的产品给我看下。”</p>
+<p>23、百度研发的无人驾驶汽车，你会发现有些地方你是去不了的。腾讯研发的无人驾驶汽车，你会发现很多地方你要去是要黄钻会员的。当然，谷歌研发的无人驾驶汽车，你会发现查无此车。</p>
+<p>24、话说昨天是周日，程序猿跟产品经理一起看电视。每个节目看到一半程序猿就换台，看到一半就换台，几次之后产品经理终于忍无可忍的咆哮：老子刚看出点意思你就换、刚看出点意思你就换，到底还让不让人看啦？！程序猿淡定的盯着电视道：你半路改需求的时候我可没吱过声！</p>
+<p>25、“为什么删除手机上的图标的时候它们会抖？”<br>“它们怕被删除呗。”<br>“那为什么电话短信之类系统自带的删不掉的也在抖呢？”<br>“那是它们在得瑟…”</p>
+<p>26、有时候觉得，电脑就像一个高贵冷艳的妹纸。<br><code>400</code>，是她冷冰冰地说：“我听不懂你在说什么”；<br><code>401</code>，是她无情地转身：“我不认识你，别说那些奇怪的话”；<br><code>403</code>，是她残酷的拒绝：“我听懂你的话，也认出你的脸，可我不爱你”；<br><code>404</code>，是她紧闭心门：“我这儿没有你想要的东西”；<br><code>503</code>，是“呵呵我去洗澡”。</p>
+<p>27、问：为何软件正在占领全世界，而程序员得不到尊重？答曰：遍身罗绮者，不是养蚕人。</p>
+<p>28、她来例假了肚子疼，他坐着她旁边，看了她一眼，拿出手机玩游戏，她看在眼里，心里凉了半截。两分钟后，她实在坐不下去了，正准备离开，只见他默默地递过来他的小米手机说：拿去捂着。</p>
+<p>29、惊闻微软要裁员 <code>1.8</code> 万人。他们就不能让这些员工们“在后台运行”吗？</p>
+<p>30、今天看到我同事在笔记本电脑上实现 <code>滑动解锁</code> ！真的，看到我当场就震精了，异常碉堡……你知道吗？！他的电脑开机解锁密码是 <code>ASDFGHJKL;’</code> ，然后唰得一下过去最后一个键落在回车上，就，就解锁了！</p>
+<p>31、骗子网站太特么多了，你一打开，必定跳出一个很下流的游戏广告！——但这还不是最关键的，关键是如果你忍不住点击进入游戏之后，就会发现这些下流的元素全都不见了！这也太没有职业道德了吧！</p>
+<p>32、最近发现自己陷入了一种状态，叫开机迷失。开电脑前，该做什么清清楚楚。但只要一登录，随手开个网页，刷下新闻微博甚至仅仅是音乐网站，然后再回过神来，已经到了深夜，要做的事一项没做。而最痛苦的是，在睡前闭眼的时候，整个被浪费的白天和那些被耽误的正事，总会掺杂着负罪感，无比清晰地浮现。</p>
+<p>33、我要设计一个新的智能机应用程序叫做 <code>惊慌</code>，只要你一说 <code>老婆</code> 这两个字, 它就会关闭所有网页, 隐藏所有跟女性的聊天以及怪怪的文件夹, 并且把我老婆的照片设为墙纸。</p>
+<p>34、我从苹果手机的背面知道了一个好地方叫做加利福尼亚，据说那里有阳光和沙滩，还有 <code>Google</code> 和 <code>Tesla</code>。据说那里的人经常讨论怎么创业，而不是怎么移民。我虽然在中国，但也去过那里，不是在梦中，而是通过 <code>VPN</code>。</p>
+<p>35、边上工位的妹纸叫柳依依，她的爸爸也是位程序员，依依的大姐叫玲玲，二姐叫玲依，三姐叫依玲</p>
+<hr>
+<p>整理自网络</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;以下是关于程序员的一些笑话，据说看懂的人都还在加班中。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;0、老婆给当程序员的老公打电话：下班顺路买十个包子，如果看到卖西瓜的，买一个。当晚老公手捧一个包子进了家门。老婆怒道：你怎么只买一个包子？！老公甚恐，喃喃道：因为我真看到卖西瓜的了。&lt;/p&gt;
+&lt;p&gt;1、一程序员去面试，面试官问：“你毕业才两年，这三年工作经验是怎么来的？！”程序员答：“加班。”&lt;/p&gt;
+&lt;p&gt;2、某程序员对书法十分感兴趣，退休后决定在这方面有所建树。于是花重金购买了上等的文房四宝。一日，饭后突生雅兴，一番磨墨拟纸，并点上了上好的檀香，颇有王羲之风范，又具颜真卿气势，定神片刻，泼墨挥毫，郑重地写下一行字：&lt;code&gt;hello world&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;3、问：程序员最讨厌康熙的哪个儿子。答：胤禩。因为他是八阿哥（&lt;code&gt;bug&lt;/code&gt;）&lt;br&gt;
+    
+    </summary>
+    
+      <category term="杂谈" scheme="http://ehlxr.me/categories/%E6%9D%82%E8%B0%88/"/>
+    
+    
+      <category term="程序员幽默" scheme="http://ehlxr.me/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E5%B9%BD%E9%BB%98/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Windows 10 删除、恢复资源管理器中“视频、图片”等文件夹</title>
+    <link href="http://ehlxr.me/2016/10/25/Windows-10-%E5%88%A0%E9%99%A4%E3%80%81%E6%81%A2%E5%A4%8D%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E5%99%A8%E4%B8%AD%E2%80%9C%E8%A7%86%E9%A2%91%E3%80%81%E5%9B%BE%E7%89%87%E2%80%9D%E7%AD%89%E6%96%87%E4%BB%B6%E5%A4%B9/"/>
+    <id>http://ehlxr.me/2016/10/25/Windows-10-删除、恢复资源管理器中“视频、图片”等文件夹/</id>
+    <published>2016-10-25T11:48:31.000Z</published>
+    <updated>2017-01-10T03:26:27.317Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>Windows 10 资源管理器中的”视频、图片、文档、下载、音乐、桌面”等文件夹目前通过一般途径是删除不了的，只能通过注册表的删除删掉，本文介绍一种比较简单的删除、恢复方法。</p>
+</blockquote>
+<p><img src="http://oapjp6spr.bkt.clouddn.com/20161025111013.jpg" alt=""></p>
+<a id="more"></a>
+<h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><p>打开注册表（<code>Win+R</code> 输入 <code>regedit</code>）找到以下键：<br><code>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\</code> 单击 <code>NameSpace</code> 右键 <code>导出</code>，保存文件后缀名为 <code>.reg</code>。</p>
+<h2 id="删除"><a href="#删除" class="headerlink" title="删除"></a>删除</h2><p>用文本编辑器打开该文件，只保留类似以下内容，并且在行首添加 <code>-</code> 号，然后保存。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">Windows Registry Editor Version 5.00</div><div class="line"></div><div class="line">[-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\&#123;088e3905-0323-4b02-9826-5d99428e115f&#125;]</div><div class="line"></div><div class="line">[-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\&#123;1CF1260C-4DD0-4ebb-811F-33C572699FDE&#125;]</div><div class="line"></div><div class="line">[-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\&#123;24ad3ad4-a569-4530-98e1-ab02f9417aa8&#125;]</div><div class="line"></div><div class="line">[-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\&#123;374DE290-123F-4565-9164-39C4925E467B&#125;]</div><div class="line"></div><div class="line">[-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\&#123;3ADD1653-EB32-4cb0-BBD7-DFA0ABB5ACCA&#125;]</div><div class="line"></div><div class="line">[-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\&#123;3dfdf296-dbec-4fb4-81d1-6a3438bcf4de&#125;]</div><div class="line"></div><div class="line">[-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\&#123;A0953C92-50DC-43bf-BE83-3742FED03C9C&#125;]</div><div class="line"></div><div class="line">[-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\&#123;A8CDFF1C-4878-43be-B5FD-F8091C1C60D0&#125;]</div><div class="line"></div><div class="line">[-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\&#123;B4BFCC3A-DB2C-424C-B029-7FE99A87C641&#125;]</div><div class="line"></div><div class="line">[-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\&#123;d3162b92-9365-467a-956b-92703aca08af&#125;]</div><div class="line"></div><div class="line">[-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\&#123;f86fa3ab-70d2-4fc7-9c99-fcbf05467f3a&#125;]</div></pre></td></tr></table></figure>
+<p>双击该文件即可删除。</p>
+<h2 id="恢复"><a href="#恢复" class="headerlink" title="恢复"></a>恢复</h2><p>想要恢复，编辑文件，删除行首 <code>-</code> 号，保存，双击运行即可恢复。</p>
+<hr>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;Windows 10 资源管理器中的”视频、图片、文档、下载、音乐、桌面”等文件夹目前通过一般途径是删除不了的，只能通过注册表的删除删掉，本文介绍一种比较简单的删除、恢复方法。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src=&quot;http://oapjp6spr.bkt.clouddn.com/20161025111013.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="开发工具" scheme="http://ehlxr.me/categories/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/"/>
+    
+    
+      <category term="Windows 10" scheme="http://ehlxr.me/tags/Windows-10/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>设置 Sublime Text3 主题透明</title>
+    <link href="http://ehlxr.me/2016/10/24/%E8%AE%BE%E7%BD%AE-Sublime-Text3-%E4%B8%BB%E9%A2%98%E9%80%8F%E6%98%8E/"/>
+    <id>http://ehlxr.me/2016/10/24/设置-Sublime-Text3-主题透明/</id>
+    <published>2016-10-24T17:30:55.000Z</published>
+    <updated>2017-01-10T03:26:27.317Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="1-下载安装包"><a href="#1-下载安装包" class="headerlink" title="1. 下载安装包"></a>1. 下载安装包</h1><p>下载地址：<a href="https://github.com/vhanla/SublimeTextTrans" target="_blank" rel="external">SublimeTextTrans</a>。</p>
+<h1 id="2-安装插件"><a href="#2-安装插件" class="headerlink" title="2. 安装插件"></a>2. 安装插件</h1><p>解压到 Sublime Text3 的 Packages 存放目录下，命名为：<code>SublimeTextTrans</code>。点击 Sublime Text3 的 <code>Preferences -&gt; Browse Packages</code> 打开 Packages 存放目录，一般情况是在 <code>C:\Users\YOURNAME\AppData\Roaming\Sublime Text 3\Packages</code> 目录下。</p>
+<h1 id="3-设置-Sublime-Text3-的透明度级别。"><a href="#3-设置-Sublime-Text3-的透明度级别。" class="headerlink" title="3. 设置 Sublime Text3 的透明度级别。"></a>3. 设置 Sublime Text3 的透明度级别。</h1><p>点击 Sublime Text3 的 <code>Preferences -&gt; Package Setting -&gt; SublimeTextTrans -&gt; Setting - User</code> 就可以设置透明度的级别了。</p>
+<a id="more"></a>
+<p>也可以通过 <code>Ctrl+Shift+1、2、3、4、5、6</code> 加载预设的 6 个透明级别。预设的透明级别在 <code>Preferences -&gt; Package Setting -&gt; SublimeTextTrans -&gt; Setting - Default</code> 中可以查看。</p>
+<hr>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h1 id=&quot;1-下载安装包&quot;&gt;&lt;a href=&quot;#1-下载安装包&quot; class=&quot;headerlink&quot; title=&quot;1. 下载安装包&quot;&gt;&lt;/a&gt;1. 下载安装包&lt;/h1&gt;&lt;p&gt;下载地址：&lt;a href=&quot;https://github.com/vhanla/SublimeTextTrans&quot;&gt;SublimeTextTrans&lt;/a&gt;。&lt;/p&gt;
+&lt;h1 id=&quot;2-安装插件&quot;&gt;&lt;a href=&quot;#2-安装插件&quot; class=&quot;headerlink&quot; title=&quot;2. 安装插件&quot;&gt;&lt;/a&gt;2. 安装插件&lt;/h1&gt;&lt;p&gt;解压到 Sublime Text3 的 Packages 存放目录下，命名为：&lt;code&gt;SublimeTextTrans&lt;/code&gt;。点击 Sublime Text3 的 &lt;code&gt;Preferences -&amp;gt; Browse Packages&lt;/code&gt; 打开 Packages 存放目录，一般情况是在 &lt;code&gt;C:\Users\YOURNAME\AppData\Roaming\Sublime Text 3\Packages&lt;/code&gt; 目录下。&lt;/p&gt;
+&lt;h1 id=&quot;3-设置-Sublime-Text3-的透明度级别。&quot;&gt;&lt;a href=&quot;#3-设置-Sublime-Text3-的透明度级别。&quot; class=&quot;headerlink&quot; title=&quot;3. 设置 Sublime Text3 的透明度级别。&quot;&gt;&lt;/a&gt;3. 设置 Sublime Text3 的透明度级别。&lt;/h1&gt;&lt;p&gt;点击 Sublime Text3 的 &lt;code&gt;Preferences -&amp;gt; Package Setting -&amp;gt; SublimeTextTrans -&amp;gt; Setting - User&lt;/code&gt; 就可以设置透明度的级别了。&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="开发工具" scheme="http://ehlxr.me/categories/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/"/>
+    
+    
+      <category term="Sublime" scheme="http://ehlxr.me/tags/Sublime/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>[转]用 Markdown 写印象笔记（Evernote）</title>
+    <link href="http://ehlxr.me/2016/10/19/%E8%BD%AC-%E7%94%A8-Markdown-%E5%86%99%E5%8D%B0%E8%B1%A1%E7%AC%94%E8%AE%B0%EF%BC%88Evernote%EF%BC%89/"/>
+    <id>http://ehlxr.me/2016/10/19/转-用-Markdown-写印象笔记（Evernote）/</id>
+    <published>2016-10-19T10:47:23.000Z</published>
+    <updated>2017-01-10T03:26:27.318Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>使用印象笔记很久了，什么都觉得很好，就是不支持 Markdown 书写语法，实在是太遗憾了。今天发现网上有人介绍了一款 Sublime 的一个插件 <a href="https://packagecontrol.io/packages/Evernote" target="_blank" rel="external">Evernote</a>，尝试了一下觉得还是一个不错的方案，正好我也很喜欢使用 Sublime 编辑器，如此甚好，哈哈…</p>
+</blockquote>
+<!-- ![][2] -->
+<img src="http://oapjp6spr.bkt.clouddn.com/2016101901.png" width="400">
+<a id="more"></a>
+<h1 id="一、安装"><a href="#一、安装" class="headerlink" title="一、安装"></a>一、安装</h1><h2 id="1-1-用-Sublime-的-PackageControl-安装-Evernote-插件"><a href="#1-1-用-Sublime-的-PackageControl-安装-Evernote-插件" class="headerlink" title="1.1 用 Sublime 的 PackageControl 安装 Evernote 插件"></a>1.1 用 Sublime 的 PackageControl 安装 <a href="https://packagecontrol.io/packages/Evernote" target="_blank" rel="external">Evernote</a> 插件</h2><h2 id="1-2-设置-Sublime-与印象笔记做关联"><a href="#1-2-设置-Sublime-与印象笔记做关联" class="headerlink" title="1.2 设置 Sublime 与印象笔记做关联"></a>1.2 设置 Sublime 与印象笔记做关联</h2><p>国内印象笔记用户打开链接：<a href="https://app.yinxiang.com/api/DeveloperToken.action" target="_blank" rel="external">https://app.yinxiang.com/api/DeveloperToken.action</a>，国际 Evernote 用户打开链接：<a href="https://www.evernote.com/api/DeveloperToken.action" target="_blank" rel="external">https://www.evernote.com/api/DeveloperToken.action</a>。然后点击页面按钮 <code>Create a developer token</code> 生成开发者秘钥。</p>
+<p>打开 Sublime <code>Preferences -&gt; Package Settings -&gt; Evernote -&gt; Settings - User</code> 在文件中贴入如下内容：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line"> <span class="attr">"noteStoreUrl"</span>: <span class="string">""</span>,</div><div class="line"> <span class="attr">"token"</span>: <span class="string">""</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>noteStoreUrl</code> 和 <code>token</code> 值为之前打开的页面的上的值，然后保存。</p>
+<p>测试是否成功：通过快捷键 <code>ctrl+shift+p</code> 打开 Sublime 命令窗口，输入 <code>evernote</code>，就会看见 Evernote 的许多命令，点击 <code>evernote:list recent notes</code>，如果看到罗列出最新的笔记，则说明授权成功。</p>
+<h1 id="二、快捷键设置"><a href="#二、快捷键设置" class="headerlink" title="二、快捷键设置"></a>二、快捷键设置</h1><p>插件默认没有添加快捷键，但可以自己配置。通过快捷键 <code>ctrl+shift+p</code> 打开 Sublime 命令窗口，输入 <code>key binding</code>，选择 <code>User</code> 那，写入你的内容。</p>
+<p>下面是我的设置：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">[</div><div class="line">    &#123; <span class="attr">"keys"</span>: [<span class="string">"Ctrl+e"</span>, <span class="string">"Ctrl+o"</span>], <span class="attr">"command"</span>: <span class="string">"open_evernote_note"</span> &#125;,</div><div class="line">    &#123; <span class="attr">"keys"</span>: [<span class="string">"Ctrl+s"</span>], <span class="attr">"command"</span>: <span class="string">"save_evernote_note"</span>, <span class="attr">"context"</span>: [&#123;<span class="attr">"key"</span>: <span class="string">"evernote_note"</span>&#125;, &#123;<span class="attr">"key"</span>: <span class="string">"evernote_has_guid"</span>&#125;] &#125;,</div><div class="line">    &#123; <span class="attr">"keys"</span>: [<span class="string">"Ctrl+s"</span>], <span class="attr">"command"</span>: <span class="string">"send_to_evernote"</span>, <span class="attr">"context"</span>: [&#123;<span class="attr">"key"</span>: <span class="string">"evernote_note"</span>&#125;, &#123;<span class="attr">"key"</span>: <span class="string">"evernote_has_guid"</span>, <span class="attr">"operator"</span>: <span class="string">"equal"</span>, <span class="attr">"operand"</span>: <span class="literal">false</span>&#125;] &#125;</div><div class="line">]</div></pre></td></tr></table></figure>
+<p><strong>解释：</strong>意思是，按 <code>ctrl+e, o</code> 后，会打开印象笔记，按 <code>ctrl+s</code> 会将笔记保存并且同步到印象笔记。</p>
+<h1 id="三、常用命令"><a href="#三、常用命令" class="headerlink" title="三、常用命令"></a>三、常用命令</h1><p>通过快捷键 <code>ctrl+shift+p</code>，打开 Sublime 命令窗口就可以使用一些常用命令了。</p>
+<ul>
+<li><code>Evernote: New empty note</code>：创建笔记</li>
+<li><code>Evernote: Open Evernote Note</code>：打开印象笔记</li>
+<li><code>Evernote: List recent notes</code>：打开最近笔记</li>
+<li><code>Evernote: Search note</code>：搜索笔记</li>
+</ul>
+<h1 id="四、个人配置"><a href="#四、个人配置" class="headerlink" title="四、个人配置"></a>四、个人配置</h1><p>主要更改了代码的字体和颜色，需要注意的是替换掉 <code>noteStoreUrl</code> 和 <code>token</code> 值为步骤 2 中获取内容。点击 Sublime Text 的 <code>Preferences -&gt; Package Settings -&gt; Evernote -&gt; Settings - User</code> 粘贴以下内容：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"noteStoreUrl"</span>: <span class="string">"更换为步骤 2 中获取的 noteStoreUrl"</span>,</div><div class="line">    <span class="attr">"token"</span>: <span class="string">"更换为步骤 2 中获取的 token"</span>,</div><div class="line">    <span class="attr">"inline_css"</span>: &#123;</div><div class="line">        <span class="attr">"body"</span>: <span class="string">""</span>,</div><div class="line">        <span class="attr">"pre"</span>: <span class="string">"color: #000000; font-family: Consolas,monospace; font-size: 0.9em; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #cccccc; border-radius: 3px; overflow: auto; padding: 6px 10px; margin-bottom: 10px;"</span>,</div><div class="line">        <span class="attr">"code"</span>: <span class="string">"color: black; font-family: Consolas,monospace; font-size: 1.1em;"</span>,</div><div class="line">        <span class="attr">"inline-code"</span>: <span class="string">"color: #c7254e; font-family: Consolas,monospace; padding: 0.1em 0.2em; margin: 0.1em; font-size: 85%; background-color: #f9f2f4; border-radius: 3px; border: 1px solid #d6d6d6;"</span>,</div><div class="line">        <span class="attr">"h1"</span>: <span class="string">"margin-bottom: 1em; margin-top: 1.2em;"</span>,</div><div class="line">        <span class="attr">"footnotes"</span>: <span class="string">"border-top: 1px solid #9AB39B; font-size: 80%;"</span>,</div><div class="line">        <span class="attr">"hr"</span>: <span class="string">"color:#9AB39B;background-color:#9AB39B;height:1px;border:none;"</span>,</div><div class="line">        <span class="attr">"sup"</span>: <span class="string">"color:#6D6D6D;font-size:1ex"</span>,</div><div class="line">        <span class="attr">"blockquote"</span>: <span class="string">"border-left: .5ex solid #BFBFBF; margin-left: 0px; padding-left: 1em; margin-top: 1.4285em; margin-bottom: 1.4285em;"</span>,</div><div class="line">        <span class="attr">"table"</span>: <span class="string">"border-collapse: collapse; border-spacing: 0; margin: 1em;"</span>,</div><div class="line">        <span class="attr">"td"</span>: <span class="string">"border: 1px solid #DDD; padding: 6px 13px;"</span>,</div><div class="line">        <span class="attr">"th"</span>: <span class="string">"border: 1px solid #DDD; padding: 6px 13px;"</span>,</div><div class="line">        <span class="attr">"tr:odd"</span>: <span class="string">"border: 1px solid #DDD; padding: 6px 13px;"</span>,</div><div class="line">        <span class="attr">"tr:even"</span>: <span class="string">"border: 1px solid #DDD; padding: 6px 13px; background-color: #F8F8F8;"</span></div><div class="line">    &#125;,</div><div class="line">    <span class="attr">"code_highlighting_style"</span>: <span class="string">"github"</span>,</div><div class="line">    <span class="attr">"code_friendly"</span>: <span class="literal">true</span>,</div><div class="line">    <span class="attr">"gfm_tables"</span>: <span class="literal">true</span>,</div><div class="line">    <span class="attr">"wiki_tables"</span>: <span class="literal">false</span>,</div><div class="line">    <span class="attr">"emphasis_mark"</span>: <span class="string">"_"</span>,</div><div class="line">    <span class="attr">"strong_mark"</span>: <span class="string">"**"</span>,</div><div class="line">    <span class="attr">"item_mark"</span>: <span class="string">"*"</span>,</div><div class="line">    <span class="attr">"notes_order"</span>: <span class="string">"updated"</span>,</div><div class="line">    <span class="attr">"max_notes"</span>: <span class="number">100</span>,</div><div class="line">    <span class="attr">"update_on_save"</span>: <span class="literal">false</span>,</div><div class="line">    <span class="attr">"evernote_autocomplete"</span>: <span class="literal">true</span>,</div><div class="line">    <span class="attr">"sort_notebooks"</span>: <span class="literal">false</span>,</div><div class="line">    <span class="attr">"show_stacks"</span>: <span class="literal">true</span>,</div><div class="line">    <span class="attr">"open_single_result"</span>: <span class="literal">true</span>,</div><div class="line">    <span class="attr">"tab_prefix"</span>: <span class="string">"Evernote: "</span>,</div><div class="line">    <span class="attr">"warn_on_close"</span>: <span class="literal">true</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<hr>
+<p><a href="http://www.jianshu.com/p/0add426fdd26" target="_blank" rel="external">原文地址</a></p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;使用印象笔记很久了，什么都觉得很好，就是不支持 Markdown 书写语法，实在是太遗憾了。今天发现网上有人介绍了一款 Sublime 的一个插件 &lt;a href=&quot;https://packagecontrol.io/packages/Evernote&quot;&gt;Evernote&lt;/a&gt;，尝试了一下觉得还是一个不错的方案，正好我也很喜欢使用 Sublime 编辑器，如此甚好，哈哈…&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;!-- ![][2] --&gt;
+&lt;img src=&quot;http://oapjp6spr.bkt.clouddn.com/2016101901.png&quot; width=&quot;400&quot;&gt;
+    
+    </summary>
+    
+      <category term="开发工具" scheme="http://ehlxr.me/categories/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/"/>
+    
+    
+      <category term="Markdown" scheme="http://ehlxr.me/tags/Markdown/"/>
+    
+      <category term="Evernote" scheme="http://ehlxr.me/tags/Evernote/"/>
+    
+  </entry>
+  
+</feed>

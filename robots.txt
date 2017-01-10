@@ -1,0 +1,17 @@
+# ehlxr robots.txt
+User-agent: *
+Allow: /
+Allow: /archives/
+Allow: /categories/
+Allow: /tags/
+Allow: /about/
+
+Disallow: /lib/
+Disallow: /js/
+Disallow: /css/
+Disallow: /fonts/
+Disallow: /vendors/
+Disallow: /fancybox/
+
+Sitemap: http://www.ehlxr.me/baidusitemap.xml
+Sitemap: http://www.ehlxr.me/sitemap.xml
